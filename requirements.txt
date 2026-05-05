@@ -1,0 +1,15 @@
+# Pinned for reproducibility on free-tier T4 (CUDA 12.x)
+# If running CPU-only (e.g. for data prep), install torch separately first.
+torch==2.3.1
+transformers==4.42.4
+datasets==2.20.0
+accelerate==0.32.1
+sentencepiece==0.2.0
+spacy==3.7.5
+pandas==2.2.2
+numpy==1.26.4
+pyyaml==6.0.1
+tqdm==4.66.4
+requests==2.32.3
+pytest==8.2.2
+# spaCy English model (install with `python -m spacy download en_core_web_sm`)
