@@ -55,6 +55,8 @@ def run_inference(
     cfg: dict,
     test_path: Path,
     out_path: Path,
+    repetition_penalty: float | None = None,
+    no_repeat_ngram_size: int = 0,
 ) -> None:
     test_data = load_jsonl(test_path)
     n_total = len(test_data)
@@ -90,12 +92,16 @@ def run_inference(
                 padding=True,
                 return_tensors="pt",
             ).to(device)
+            gen_kwargs = {
+                "max_new_tokens": max_new_tokens,
+                "do_sample": False,
+            }
+            if repetition_penalty is not None:
+                gen_kwargs["repetition_penalty"] = repetition_penalty
+            if no_repeat_ngram_size > 0:
+                gen_kwargs["no_repeat_ngram_size"] = no_repeat_ngram_size
             with torch.no_grad():
-                out_ids = model.generate(
-                    **enc,
-                    max_new_tokens=max_new_tokens,
-                    do_sample=False,
-                )
+                out_ids = model.generate(**enc, **gen_kwargs)
             for ex, ids in zip(batch, out_ids):
                 generated = tok.decode(ids, skip_special_tokens=True)
                 gold = parse_answer(ex["answer"])
@@ -129,6 +135,24 @@ def main():
              "If omitted for a student condition, the latest checkpoint under "
              "outputs/checkpoints/{run_name}/ is used automatically.",
     )
+    p.add_argument(
+        "--repetition-penalty",
+        type=float,
+        default=None,
+        help="If set, passes repetition_penalty to model.generate (e.g. 1.3).",
+    )
+    p.add_argument(
+        "--no-repeat-ngram-size",
+        type=int,
+        default=0,
+        help="If >0, blocks repetition of n-grams of this size during decoding.",
+    )
+    p.add_argument(
+        "--out-suffix",
+        default="",
+        help="Suffix appended to output filename: {condition}{suffix}.jsonl. "
+             "Use to keep diagnostic re-runs from clobbering original generations.",
+    )
     args = p.parse_args()
 
     cfg = load_config(REPO_ROOT / args.config)
@@ -146,8 +170,16 @@ def main():
         model_path = str(ckpt)
         print(f"[auto] using checkpoint: {ckpt.name}")
 
-    out_path = gen_dir / f"{args.condition}.jsonl"
-    run_inference(model_path, args.condition, cfg, test_path, out_path)
+    out_path = gen_dir / f"{args.condition}{args.out_suffix}.jsonl"
+    run_inference(
+        model_path,
+        args.condition,
+        cfg,
+        test_path,
+        out_path,
+        repetition_penalty=args.repetition_penalty,
+        no_repeat_ngram_size=args.no_repeat_ngram_size,
+    )
 
 
 if __name__ == "__main__":
