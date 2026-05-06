@@ -1,0 +1,36 @@
+# Single source of truth for all hyperparameters.
+
+model_name: google/flan-t5-base
+seed: 42
+
+# Training
+learning_rate: 3.0e-4
+batch_size: 4
+gradient_accumulation_steps: 8   # effective batch 32
+num_epochs: 3
+warmup_ratio: 0.03
+weight_decay: 0.0
+fp16: true                       # auto-disabled on CPU
+val_split: 0.1                   # 10% deterministic val split
+
+# Tokenization
+max_input_length: 256
+max_target_length: 256
+
+# Inference
+inference_max_new_tokens: 256
+inference_batch_size: 8
+
+# ReCEval
+nli_model: MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli
+nli_batch_size: 16
+info_lm: gpt2                    # frozen LM for log-likelihood informativeness
+
+paths:
+  set_a: data/processed/set_a_nofilter.jsonl
+  set_b: data/processed/set_b_magister.jsonl
+  gsm8k_test: data/raw/gsm8k/test.jsonl
+  ckpt_root: outputs/checkpoints
+  generations_dir: outputs/generations
+  eval_dir: outputs/eval_results
+  audit_dir: outputs/audit
