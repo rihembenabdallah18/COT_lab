@@ -60,6 +60,33 @@ def _best_checkpoint(run_dir: Path) -> Path:
     return ckpts[-1]
 
 
+def _load_tokenizer(model_path: str, fallback: str):
+    """Load tokenizer from the checkpoint, then run-dir, then base model.
+
+    HF Trainer with save_total_limit=2 + load_best_model_at_end=True is known
+    to skip writing tokenizer files into rotated checkpoint dirs in some
+    transformers versions. The tokenizer is identical to the base model
+    (we never modify the vocab), so falling back to that is safe.
+    """
+    candidates = [model_path]
+    parent = str(Path(model_path).parent)
+    if parent != model_path:
+        candidates.append(parent)
+    candidates.append(fallback)
+    last_err: Exception | None = None
+    for cand in candidates:
+        try:
+            tok = AutoTokenizer.from_pretrained(cand)
+            if cand != model_path:
+                print(f"[tokenizer] not in {model_path}; loaded from {cand}")
+            return tok
+        except (OSError, ValueError) as e:
+            last_err = e
+    raise RuntimeError(
+        f"could not load tokenizer from any of {candidates}; last err: {last_err}"
+    )
+
+
 def _build_gen_kwargs(cfg: dict, args) -> dict:
     """v2 decoding defaults read from config; CLI overrides win."""
     num_beams = args.num_beams if args.num_beams is not None \
@@ -109,7 +136,7 @@ def run_inference(
         }
 
     print(f"[{condition}] loading model from {model_path}")
-    tok = AutoTokenizer.from_pretrained(model_path)
+    tok = _load_tokenizer(model_path, fallback=cfg["model_name"])
     model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = model.to(device)
