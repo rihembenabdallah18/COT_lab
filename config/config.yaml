@@ -1,36 +1,56 @@
 # Single source of truth for all hyperparameters.
+# v2 recipe — supersedes v1 (lr=3e-4, no weight decay, 3 epochs, greedy).
+# See AGENT.md §3 for the rationale.
 
 model_name: google/flan-t5-base
 seed: 42
 
-# Training
-learning_rate: 3.0e-4
+# Training (v2: aggressive fix)
+learning_rate: 5.0e-5            # was 3e-4 in v1
 batch_size: 4
 gradient_accumulation_steps: 8   # effective batch 32
-num_epochs: 3
-warmup_ratio: 0.03
-weight_decay: 0.0
+num_epochs: 8                    # was 3 in v1; with early stopping
+warmup_ratio: 0.10               # was 0.03 in v1
+weight_decay: 0.01               # was 0.0 in v1
 fp16: true                       # auto-disabled on CPU
 val_split: 0.1                   # 10% deterministic val split
+early_stopping_patience: 2       # epochs with no eval-loss improvement
 
-# Tokenization
-max_input_length: 256
-max_target_length: 256
+# Tokenisation
+max_input_length: 512            # was 256 in v1 (teacher CoTs were truncated)
+max_target_length: 512           # was 256 in v1
 
-# Inference
-inference_max_new_tokens: 256
+# Inference (v2: beam + repetition controls; v1 was pure greedy and looped)
+inference_max_new_tokens: 512    # was 256 in v1
 inference_batch_size: 8
+inference_num_beams: 4           # v1: 1 (greedy)
+inference_no_repeat_ngram_size: 4  # v1: 0
+inference_repetition_penalty: 1.15  # v1: 1.0
+inference_length_penalty: 1.0
+inference_do_sample: false
 
-# ReCEval
+# Optional size-ablation slot (Stage 3 secondary track)
+size_ablation:
+  enabled: false                 # flip to true to also train flan-t5-small
+  model_name: google/flan-t5-small
+  conditions: [direct_ft, set_a, set_b]   # subset of the main matrix
+
+# ReCEval (Stage 5b)
 nli_model: MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli
 nli_batch_size: 16
 info_lm: gpt2                    # frozen LM for log-likelihood informativeness
+receval_max_examples: null       # null = full test; set to 500 if budget tight
 
 paths:
   set_a: data/processed/set_a_nofilter.jsonl
   set_b: data/processed/set_b_magister.jsonl
+  set_c: data/processed/set_c_calculator.jsonl
+  direct_ft: data/processed/direct_ft.jsonl
   gsm8k_test: data/raw/gsm8k/test.jsonl
   ckpt_root: outputs/checkpoints
   generations_dir: outputs/generations
+  generations_v1_dir: outputs/generations_v1
   eval_dir: outputs/eval_results
   audit_dir: outputs/audit
+  runs_dir: outputs/runs
+  plots_dir: outputs/plots
