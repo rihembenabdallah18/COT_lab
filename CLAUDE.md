@@ -6,7 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a 3-week NLP research project reproducing Magister et al. (ACL 2023) CoT knowledge distillation at small scale, with ReCEval (Prasad et al., EMNLP 2023) added as a second evaluation axis. The central question: does final-answer accuracy adequately reflect reasoning quality in distilled student models?
 
-**Full execution specification is in [AGENT.md](AGENT.md). Read it before starting any stage.**
+**Full execution specification is in [AGENT.md](AGENT.md) (currently v2 — supersedes v1 after the diagnostic in [doc/Current Notebook.md](doc/Current%20Notebook.md)). Read AGENT.md before starting any stage.**
+
+Supporting context is in `doc/`:
+- `RESEARCH.md` — research plan
+- `Related work.md` — paper-by-paper notes (Wei, Magister, Wang/SC, ThinkSLM, Ho)
+- `Proposed Plan.md` — the user's enhancement plan that AGENT.md v2 implements
+- `Current Notebook.md` — the diagnostic that motivated the v2 rewrite
 
 ## Working Mode
 
@@ -24,11 +30,18 @@ python -m spacy download en_core_web_sm
 # Run per-stage scripts in order
 bash scripts/01_download.sh
 bash scripts/02_filter.sh
-bash scripts/03_train_set_b.sh   # Set B first (Magister filter)
-bash scripts/03_train_set_a.sh   # Set A (no filter)
+bash scripts/03_train_direct_ft.sh  # Direct FT first (cheapest sanity check)
+bash scripts/03_train_set_b.sh      # Magister filter (~3.4K)
+bash scripts/03_train_set_c.sh      # Calculator-corrected filter
+bash scripts/03_train_set_a.sh      # No filter (full ~7.5K, longest)
 bash scripts/04_inference.sh
-bash scripts/05_eval.sh
+bash scripts/05a_accuracy.sh
+bash scripts/05b_receval.sh
+
 bash scripts/06_audit_prep.sh
+
+# Project-wide status across all stages (reads outputs/runs/*.json):
+bash scripts/status.sh
 
 # Run tests
 python -m pytest tests/
@@ -41,12 +54,15 @@ Seven sequential pipeline stages, each with a dedicated script and src module:
 | Stage | Script | Module | Purpose |
 |---|---|---|---|
 | 1 | `01_download.sh` | `src/data/download.py` | GSM8K + Ho et al. teacher CoTs → `data/raw/` |
-| 2 | `02_filter.sh` | `src/data/filter.py` | Build Set A (all CoTs) and Set B (answer-correct only) → `data/processed/` |
-| 3 | `03_train_*.sh` | `src/train/finetune.py` | Fine-tune FLAN-T5-base on each set → `outputs/checkpoints/` |
-| 4 | `04_inference.sh` | `src/inference/generate.py` | Greedy decoding on GSM8K test set (1,319 examples) → `outputs/generations/` |
-| 5 | `05_eval.sh` | `src/eval/accuracy.py` + `src/eval/receval/` | Accuracy + ReCEval scoring → `outputs/eval_results/` |
+| 2 | `02_filter.sh` | `src/data/filter.py` + `src/data/calculator.py` | Build Set A (no filter), Set B (answer-correct), Set C (calculator-corrected), Direct FT (Q→A only) → `data/processed/` |
+| 3 | `03_train_*.sh` | `src/train/finetune.py` | Fine-tune FLAN-T5-base on each training set → `outputs/checkpoints/` |
+| 4 | `04_inference.sh` | `src/inference/generate.py` | Beam=4 + no_repeat_ngram=4 + repetition_penalty=1.15 on GSM8K test (1,319) → `outputs/generations/` |
+| 5a | `05a_accuracy.sh` | `src/eval/accuracy.py` | Accuracy + accuracy-with-calculator → `outputs/eval_results/accuracy.csv` |
+| 5b | `05b_receval.sh` | `src/eval/receval/` | ReCEval (intra/inter/info) → `outputs/eval_results/receval_summary.csv` |
 | 6 | `06_audit_prep.sh` | `src/audit/prepare_audit.py` | 50-example blind audit spreadsheet → `outputs/audit/` |
-| 7 | (notebook) | `notebooks/final_analysis.ipynb` | Tables, plots, final results |
+| 7 | (notebook) | `notebooks/final_analysis.ipynb` | Tables, plots, FLOPs/cost, final results |
+
+Cross-cutting: every stage writes a JSON run-card to `outputs/runs/{stage}_{run}.json` via `src/utils/runcard.py`. `python -m src.status` reconstructs project state from those run-cards.
 
 All hyperparameters live in `config/config.yaml` (single source of truth). `data/` and `outputs/` are gitignored.
 
@@ -67,8 +83,9 @@ Sentence splitting uses spaCy (`segment.py`). NLI calls must be batched (batch s
 - **No API calls**: all teacher data comes from Ho et al.'s pre-released CoTs (`itsnamgyu/reasoning-teacher`).
 - **No pvi informativeness**: use log-likelihood variant only (no T5-large training).
 - **No SRL**: sentence = step approximation throughout.
-- **Greedy decoding** for all inference (reproducibility).
+- **Beam=4 + no_repeat_ngram=4 + repetition_penalty=1.15** for all inference (reproducibility; pure greedy collapsed into loops in v1).
 - **Seed 42** for all random operations.
+- **v2 training recipe**: `lr=5e-5`, `weight_decay=0.01`, `epochs=8` (early-stop patience 2), `max_input/target=512`, `warmup_ratio=0.10`. The v1 recipe (lr=3e-4, no decay, 3 epochs, max_len=256) caused post-distillation accuracy *below baseline*.
 
 ## Stop Conditions
 

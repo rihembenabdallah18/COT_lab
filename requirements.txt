@@ -12,4 +12,5 @@ pyyaml==6.0.1
 tqdm==4.66.4
 requests==2.32.3
 pytest==8.2.2
+matplotlib==3.9.0
 # spaCy English model (install with `python -m spacy download en_core_web_sm`)
