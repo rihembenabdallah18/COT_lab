@@ -25,10 +25,12 @@ Proposed method : COT fine tuning \+ key additions
 
 example of results of Ho et al (2023) Accuracy achieved on GSM8k for specific setting:
 
-For Flan T5 Base (220 M):  
- Zero-shot : achieved 2.5% accuracy  
-Cot fine tuning achieved 2.96% acc  
-Fine tuning : 4.93% ??(what is fine tuning here how does it work )
+For Flan T5 Base (220 M):
+- Zero-shot (no fine-tuning): **2.50%**
+- CoT fine-tuning (teacher CoT distillation): **4.40%**
+- Standard fine-tuning (Q → A only, no CoT): **5.08%**
+
+"Standard fine-tuning" = supervise the model on `(question, answer)` pairs only — the target is just the gold final answer (`#### N`), no chain of thought. This is the Direct FT condition in our matrix.
 
  
 

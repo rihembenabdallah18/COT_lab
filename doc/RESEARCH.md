@@ -9,7 +9,7 @@
 
 ## 1. Summary
 
-This project reproduces, at small scale and with limited compute, the chain-of-thought (CoT) knowledge distillation pipeline of Magister et al. (ACL 2023, *Teaching Small Language Models to Reason*). Beyond simple reproduction, it adds a **second evaluation axis**: in addition to final-answer accuracy, the student model's generated reasoning chains are scored using ReCEval (Prasad et al., EMNLP 2023), a reference-free framework for measuring reasoning correctness and informativeness. A focused **filter ablation** (no filter vs. answer-correctness filter) and a **manual audit** of 50 outputs make the dual-metric evaluation defensible.
+This project reproduces, at small scale and with limited compute, the chain-of-thought (CoT) knowledge distillation pipeline of Ho et al. (ACL 2023, *Large Language Models Are Reasoning Teachers*), which itself builds on the small-student CoT distillation framing of Magister et al. (2022, *Teaching Small Language Models to Reason*). The calculator rewrite-trick used in Set C comes from Magister et al.; answer-correctness filtering (Set B) predates Magister (e.g. STaR / Zelikman 2022). Beyond simple reproduction, the project adds a **second evaluation axis**: in addition to final-answer accuracy, the student model's generated reasoning chains are scored using ReCEval (Prasad et al., EMNLP 2023), a reference-free framework for measuring reasoning correctness and informativeness. A focused **filter ablation** (no filter vs. answer-correctness filter vs. calculator-corrected filter) and a **manual audit** of 50 outputs make the dual-metric evaluation defensible.
 
 The central claim being tested is whether final-answer accuracy alone — the standard metric in CoT distillation work — adequately reflects whether reasoning capability has actually transferred to the student.
 
@@ -17,16 +17,16 @@ The central claim being tested is whether final-answer accuracy alone — the st
 
 ## 2. Background and Motivation
 
-CoT prompting reliably elicits step-by-step reasoning in large language models (≥ tens of billions of parameters), but small models (< 10B) typically produce incoherent CoTs and may even lose accuracy when prompted to reason explicitly. Magister et al. (2023) close this gap via knowledge distillation: a large teacher (e.g. PaLM 540B, GPT-3 175B) is prompted to generate CoTs on an existing supervised dataset; CoTs whose final answer is incorrect are filtered out; a small student (T5 family) is fine-tuned on the surviving (question → CoT + answer) pairs. They report substantial accuracy gains, e.g. on GSM8K, T5-XXL improves from 8.11% to 21.99%.
+CoT prompting reliably elicits step-by-step reasoning in large language models (≥ tens of billions of parameters), but small models (< 10B) typically produce incoherent CoTs and may even lose accuracy when prompted to reason explicitly. Magister et al. (2022) and Ho et al. (2023) close this gap via knowledge distillation: a large teacher (e.g. PaLM 540B, GPT-3 175B) is prompted to generate CoTs on an existing supervised dataset; CoTs whose final answer is incorrect are filtered out (an answer-correctness filter, predating Magister; cf. STaR / Zelikman 2022); a small student (T5 family) is fine-tuned on the surviving (question → CoT + answer) pairs. They report substantial accuracy gains, e.g. on GSM8K, T5-XXL improves from 8.11% to 21.99%.
 
-A natural question follows. Magister et al.'s filter accepts any CoT whose **final number** is correct, regardless of whether the reasoning chain is internally consistent, free of hallucinations, or step-wise informative. As a result:
+A natural question follows. The answer-correctness filter accepts any CoT whose **final number** is correct, regardless of whether the reasoning chain is internally consistent, free of hallucinations, or step-wise informative. As a result:
 
 - Some accepted training examples reach the right answer through flawed reasoning.
 - The student's reported gain is measured purely on final-answer accuracy — leaving open whether reasoning quality genuinely improved or whether the student learned shortcut patterns.
 
 ReCEval (Prasad et al., 2023) provides a reference-free way to score reasoning chains along two complementary axes: **correctness** (intra-step entailment, inter-step non-contradiction) and **informativeness** (information gain toward the final answer), all computed with off-the-shelf NLI and LM components. Applying ReCEval to the *student's own outputs* — not just to teacher data — directly measures whether reasoning capability has transferred, complementing accuracy.
 
-This project combines the two: a small-scale Magister-style distillation pipeline, evaluated jointly with accuracy and ReCEval, on a single student and a single dataset, with a filter ablation to give the comparison something to say.
+This project combines the two: a small-scale Ho-et-al.-style distillation pipeline (using Magister's calculator rewrite for Set C), evaluated jointly with accuracy and ReCEval, on a single student and a single dataset, with a filter ablation to give the comparison something to say.
 
 ---
 
@@ -38,7 +38,7 @@ This project combines the two: a small-scale Magister-style distillation pipelin
 
 ### Sub-questions
 
-- **SQ1 (Reproduction).** Does a Magister-style filtered distillation, applied at small scale (FLAN-T5-base, free-tier GPU), reproduce the qualitative finding that distillation improves student final-answer accuracy on GSM8K relative to a non-fine-tuned baseline?
+- **SQ1 (Reproduction).** Does a Ho-et-al.-style filtered distillation, applied at small scale (FLAN-T5-base, free-tier GPU), reproduce the qualitative finding that distillation improves student final-answer accuracy on GSM8K relative to a non-fine-tuned baseline?
 - **SQ2 (Filter effect on reasoning quality).** Does the answer-correctness filter improve only accuracy, or does it also improve ReCEval-measured reasoning quality of the student?
 - **SQ3 (Metric agreement).** On a manually labeled subset of student outputs, do ReCEval scores correlate with human judgement of reasoning quality? Where do they diverge?
 
@@ -56,9 +56,9 @@ A null result for H2 (filter helps both equally) is also reportable and informat
 
 ### In scope
 
-- **Single dataset:** GSM8K (grade-school math word problems). Chosen because it is the headline result in Magister et al., has a clean automatic correctness check, and has multi-step reasoning that makes ReCEval meaningful.
-- **Single student model:** FLAN-T5-base (250M parameters). Chosen for direct architectural comparability to Magister et al., free-tier feasibility, and fast iteration.
-- **Two training conditions:** (a) no filter on teacher CoTs; (b) answer-correctness filter (Magister's filter). Plus a non-fine-tuned baseline reference.
+- **Single dataset:** GSM8K (grade-school math word problems). Chosen because it is the headline result in Ho et al., has a clean automatic correctness check, and has multi-step reasoning that makes ReCEval meaningful.
+- **Single student model:** FLAN-T5-base (250M parameters). Chosen for direct architectural comparability to Ho et al., free-tier feasibility, and fast iteration.
+- **Two training conditions:** (a) no filter on teacher CoTs; (b) answer-correctness filter. Plus a non-fine-tuned baseline reference.
 - **Pre-released teacher CoTs:** GPT-3-generated CoTs on GSM8K released by Ho et al. 2022 (`itsnamgyu/reasoning-teacher` GitHub repo). No teacher inference is performed.
 - **Two evaluation metrics:** final-answer accuracy and ReCEval (intra-step, inter-step, informativeness).
 - **One manual audit:** 50 student outputs, blind-labeled by the author.
@@ -104,7 +104,7 @@ Construct a unified training set of triples `(question, teacher_cot, gold_answer
 Build two training sets from the same source data:
 
 - **Set A — No filter.** All teacher CoTs retained (~7K examples).
-- **Set B — Answer-correctness filter (Magister).** Parse the final number from each teacher CoT (last numeric expression after `####` or in the final sentence), compare to gold; keep only matches. Expected size: ~5K–5.5K.
+- **Set B — Answer-correctness filter.** Parse the final number from each teacher CoT (last numeric expression after `####` or in the final sentence), compare to gold; keep only matches. Expected size: ~5K–5.5K. (Filter idea predates Magister; cf. STaR / Zelikman 2022.)
 
 Record dataset sizes precisely. Both sets share the same training split — only the filter differs.
 
@@ -151,7 +151,7 @@ Aggregate: report mean and standard deviation of each metric across the test set
 
 ### Stage 6 — Manual audit (50 examples)
 
-Randomly sample 50 student outputs **from the Magister-filter condition only** (the most representative system). Stratify: 25 with correct final answer, 25 with incorrect final answer.
+Randomly sample 50 student outputs **from the answer-correctness-filter condition only** (the most representative system). Stratify: 25 with correct final answer, 25 with incorrect final answer.
 
 **Procedure (blind labeling):**
 
@@ -196,9 +196,9 @@ Produce, in this order:
 |---|---|---|---|---|
 | **Baseline** | none (zero-shot) | no | full test set | reproduction reference |
 | **No-filter distillation** | Set A (all teacher CoTs) | yes | full test set + audit subset | filter ablation lower bound |
-| **Magister-filter distillation** | Set B (answer-correct only) | yes | full test set + audit subset (manual audit drawn from this) | reproduction of Magister + main result |
+| **Answer-correct-filter distillation** | Set B (answer-correct only) | yes | full test set + audit subset (manual audit drawn from this) | reproduction of Ho et al. + main result |
 
-**Total training runs: 2.** Total inference passes: 3. Total ReCEval scoring passes: 3. Manual audit: 1 (on the Magister-filter outputs).
+**Total training runs: 2.** Total inference passes: 3. Total ReCEval scoring passes: 3. Manual audit: 1 (on the answer-correctness-filter outputs).
 
 ---
 
@@ -212,8 +212,8 @@ Produce, in this order:
 
 ### Week 2 — Full training and evaluation (~30 h)
 
-- **Days 6–7 (~10 h).** First full fine-tuning run (Set B / Magister filter). Monitor validation loss. Save checkpoints to HuggingFace Hub. **Buffer for OOM / timeout / restart.**
-- **Day 8 (~5 h).** Inference of Magister-filter student on full test set. Compute accuracy.
+- **Days 6–7 (~10 h).** First full fine-tuning run (Set B / answer-correctness filter). Monitor validation loss. Save checkpoints to HuggingFace Hub. **Buffer for OOM / timeout / restart.**
+- **Day 8 (~5 h).** Inference of Set B student on full test set. Compute accuracy.
 - **Days 9–10 (~10 h).** Second full fine-tuning run (Set A / no filter). Inference. Accuracy.
 - **Day 11 (~5 h).** Implement ReCEval scoring pipeline (NLI for correctness, log-likelihood LM for informativeness). Validate on 10 hand-checked outputs. Run on all three output sets.
 
@@ -226,7 +226,7 @@ Produce, in this order:
 ### Built-in slack
 
 - **At least one full day** of slack is built in across the schedule for the inevitable failed run, free-tier session timeout, or library version mismatch.
-- If Week 1 falls behind, drop Set A (the no-filter run) and report only baseline vs. Magister. The filter ablation is desirable but not essential — the dual-metric evaluation is the contribution.
+- If Week 1 falls behind, drop Set A (the no-filter run) and report only baseline vs. Set B. The filter ablation is desirable but not essential — the dual-metric evaluation is the contribution.
 
 ---
 

@@ -41,8 +41,11 @@ human grader, not production. Avoid premature abstraction.
 
 ## 1. What this project tests
 
-The user is reproducing **Magister et al. (ACL 2023)** at small scale on
-free-tier hardware (Kaggle/Colab T4, 16 GB), in three weeks. The novel
+The user is reproducing **Ho et al. (ACL 2023, *Large Language Models Are
+Reasoning Teachers*)** at small scale on free-tier hardware (Kaggle/Colab T4,
+16 GB), in three weeks. We use the calculator rewrite-trick from
+**Magister et al. (2022)** to construct Set C; answer-correctness filtering
+(Set B) is a pre-Magister technique (e.g. STaR / Zelikman 2022). The novel
 contribution is a **second evaluation axis on student reasoning**: in
 addition to final-answer accuracy, students are scored with **ReCEval**
 (Prasad et al., EMNLP 2023) — intra-step, inter-step, and informativeness.
@@ -57,7 +60,7 @@ addition to final-answer accuracy, students are scored with **ReCEval**
 ### Hypotheses
 
 - **H1 — Reproduction.** With the corrected recipe (§3) Set B beats the
-  zero-shot baseline on accuracy. (Direction matches Magister; magnitude
+  zero-shot baseline on accuracy. (Direction matches Ho et al.; magnitude
   expected to be modest at 220M.)
 - **H2 — Filter targets outcome more than process.** The answer-correctness
   filter (Set B) and the calculator-corrected filter (Set C) improve
@@ -69,15 +72,17 @@ addition to final-answer accuracy, students are scored with **ReCEval**
 
 ### Reference numbers (Ho et al. 2023, FLAN-T5-base on GSM8K)
 
-| Setting | Reported acc. |
-|---|---|
-| Zero-shot | 2.5% |
-| CoT fine-tuning (Magister-style) | 2.96% |
-| Direct fine-tuning (Q → A only, no CoT) | 4.93% |
+| Setting | Reported acc. | Our matching condition |
+|---|---|---|
+| Zero-shot (no FT) | 2.50% | `baseline` |
+| CoT fine-tuning | 4.40% | `student_set_a / b / c` |
+| Standard fine-tuning (Q → A only, no CoT) | 5.08% | `student_direct_ft` |
 
-These are the targets v2 is tuned against. The v1 run already cleared zero-shot
-(4.78% baseline) but *fell below it* after distillation — the failure
-explained in [doc/Current Notebook.md](doc/Current%20Notebook.md).
+These are the three targets v2 is benchmarked against. The calculator
+rewrite-trick used in Set C is from Magister et al. 2022; answer-correctness
+filtering predates Magister (e.g. STaR / Zelikman 2022). The v1 run cleared
+the un-finetuned baseline (4.78%) but *fell below it* after distillation —
+the failure explained in [doc/Current Notebook.md](doc/Current%20Notebook.md).
 
 ---
 
@@ -141,10 +146,10 @@ slot. StrategyQA is kept as an *optional* extension, not in the main matrix.
 
 | # | Condition | Training data | Format | Purpose |
 |---|---|---|---|---|
-| 1 | **Baseline** | none (zero-shot) | n/a | reproduction reference (Ho et al. 2.5%) |
-| 2 | **Direct FT** | (Q, A) pairs from GSM8K train (no CoT) | input `Q: {q}` → target `{gold_answer}` | reproduces Ho et al.'s 4.93% "fine-tuning" reference |
-| 3 | **Set A** | all 7,473 teacher CoTs | input `Q: {q}` → target `{cot} #### {gold_answer}` | no-filter distillation |
-| 4 | **Set B** | answer-correctness filter (~3,389) | same as Set A | Magister filter |
+| 1 | **Baseline** | none (zero-shot) | n/a | reproduces Ho et al.'s 2.50% zero-shot reference |
+| 2 | **Direct FT** | (Q, A) pairs from GSM8K train (no CoT) | input `Q: {q}` → target `{gold_answer}` | reproduces Ho et al.'s 5.08% standard-FT reference |
+| 3 | **Set A** | all 7,473 teacher CoTs | input `Q: {q}` → target `{cot} #### {gold_answer}` | no-filter distillation; reproduces Ho et al.'s 4.40% CoT-FT reference |
+| 4 | **Set B** | answer-correctness filter (~3,389) | same as Set A | answer-correctness filter (predates Magister; see STaR/Zelikman 2022) |
 | 5 | **Set C** | calculator-corrected filter | same as Set A | **process-aware filter** — rewrite each `A op B = C` in the CoT, then accept iff the *re-parsed* final answer matches gold. Stricter than Set B (rejects "right answer through wrong arithmetic") but adds chains rescued from arithmetic slips. |
 
 **Size ablation (parallel track, optional / time-permitting):**
@@ -167,8 +172,8 @@ trains on it unless the user asks.
   re-parse. Keep the row if the calculator-corrected final answer matches
   gold. **Note (post-Stage-2):** this is *not* strictly broader than Set B.
   Empirical sizes: A=7,473, B=3,389, **C=2,635**. Set C rescues ~50 chains
-  that fail Magister but whose arithmetic-fix lands on gold; it also evicts
-  ~800 chains that pass Magister by coincidence — i.e., the right answer
+  that fail the answer-correctness filter but whose arithmetic-fix lands on gold; it also evicts
+  ~800 chains that pass the answer-correctness filter by coincidence — i.e., the right answer
   appears in trailing prose despite mid-chain arithmetic errors. This makes
   Set C the *process-aware* filter, complementary to Set B's outcome-only
   filter. Print sizes and the B/C contingency table at Stage 2 checkpoint.
@@ -381,15 +386,15 @@ size is empty or > Set A.
    1 epoch — must finish without error and show decreasing loss.
 4. Real runs in this order (cheapest first):
    1. `03_train_direct_ft.sh`  — fastest to converge; sanity check the recipe
-   2. `03_train_set_b.sh`      — Magister filter (~3.4K)
+   2. `03_train_set_b.sh`      — answer-correctness filter (~3.4K)
    3. `03_train_set_c.sh`      — calculator filter
    4. `03_train_set_a.sh`      — full no-filter set (longest)
 5. After each run, write `03_train_{run}.json` run-card with
    `best_eval_loss`, `best_epoch`, `duration_seconds`, and
    `outputs/plots/{run}_loss.png`.
 
-**Mini-checkpoint after Direct FT:** if val loss is *higher* than Magister
-reports for similar setups (rough sanity: loss should drop below ~1.0
+**Mini-checkpoint after Direct FT:** if val loss is *higher* than what Ho
+et al. report for similar setups (rough sanity: loss should drop below ~1.0
 within 3 epochs), stop — the recipe is still wrong, do not waste a day on
 the bigger runs.
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a 3-week NLP research project reproducing Magister et al. (ACL 2023) CoT knowledge distillation at small scale, with ReCEval (Prasad et al., EMNLP 2023) added as a second evaluation axis. The central question: does final-answer accuracy adequately reflect reasoning quality in distilled student models?
+This is a 3-week NLP research project reproducing Ho et al. (ACL 2023, *Large Language Models Are Reasoning Teachers*) CoT knowledge distillation at small scale, with ReCEval (Prasad et al., EMNLP 2023) added as a second evaluation axis. The calculator rewrite-trick used in Set C is from Magister et al. 2022; answer-correctness filtering (Set B) predates Magister (e.g. STaR / Zelikman 2022). The central question: does final-answer accuracy adequately reflect reasoning quality in distilled student models?
 
 **Full execution specification is in [AGENT.md](AGENT.md) (currently v2 — supersedes v1 after the diagnostic in [doc/Current Notebook.md](doc/Current%20Notebook.md)). Read AGENT.md before starting any stage.**
 
@@ -31,7 +31,7 @@ python -m spacy download en_core_web_sm
 bash scripts/01_download.sh
 bash scripts/02_filter.sh
 bash scripts/03_train_direct_ft.sh  # Direct FT first (cheapest sanity check)
-bash scripts/03_train_set_b.sh      # Magister filter (~3.4K)
+bash scripts/03_train_set_b.sh      # answer-correctness filter (~3.4K)
 bash scripts/03_train_set_c.sh      # Calculator-corrected filter
 bash scripts/03_train_set_a.sh      # No filter (full ~7.5K, longest)
 bash scripts/04_inference.sh
