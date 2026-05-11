@@ -1,0 +1,61 @@
+{
+  "stage": "04_inference",
+  "run_name": "student_set_c",
+  "started_at": "2026-05-10T08:30:49Z",
+  "completed_at": "2026-05-10T08:40:34Z",
+  "duration_seconds": 584.45,
+  "status": "completed",
+  "config_hash": "sha256:2e269ddf9c714544",
+  "config_snapshot": {
+    "model_path": "/kaggle/working/COT_lab/outputs/checkpoints/student_set_c/checkpoint-296",
+    "out_suffix": "",
+    "config_keys": {
+      "inference_num_beams": 4,
+      "inference_no_repeat_ngram_size": 4,
+      "inference_repetition_penalty": 1.15,
+      "inference_length_penalty": 1.0,
+      "inference_max_new_tokens": 512,
+      "inference_batch_size": 8,
+      "max_input_length": 512
+    },
+    "cli_overrides": {
+      "num_beams": null,
+      "repetition_penalty": null,
+      "no_repeat_ngram_size": null,
+      "max_new_tokens": null
+    }
+  },
+  "inputs": [
+    "data/raw/gsm8k/test.jsonl"
+  ],
+  "outputs": [
+    "outputs/generations/student_set_c.jsonl"
+  ],
+  "metrics": {
+    "n_total": 1319,
+    "n_generated": 1319,
+    "already_done": 0,
+    "seconds_per_example": 0.441
+  },
+  "samples": [
+    {
+      "question": "Janet\u2019s ducks lay 16 eggs per day. She eats three for breakfast every morning and bakes muffins for her friends every day with four. She sells the remainder at the farmers' market daily for $2 per fresh duck egg. How much in dollars does she make every day at the farmers' market?",
+      "generated_cot": "Janet's ducks lay 16 eggs per day. She eats three for breakfast every morning and bakes muffins for her friends every day with four. That means she makes 16 * 3 = 48 eggs in total. She sells the remainder at the farmers' market daily for $2 per fresh duck egg. So she makes 48 * 2 = $96 in total. ###",
+      "parsed_answer": 96.0,
+      "gold_answer": 18.0
+    },
+    {
+      "question": "A robe takes 2 bolts of blue fiber and half that much white fiber.  How many bolts in total does it take?",
+      "generated_cot": "A robe takes 2 bolts of blue fiber and half that much white fiber. That means it takes 2 * 2 = 4 bolts of white fiber. This means it takes 4 * 2 = 8 bolts of black fiber. #### 8",
+      "parsed_answer": 8.0,
+      "gold_answer": 3.0
+    },
+    {
+      "question": "Josh decides to try flipping a house.  He buys a house for $80,000 and then puts in $50,000 in repairs.  This increased the value of the house by 150%.  How much profit did he make?",
+      "generated_cot": "Josh buys a house for $80,000 and then puts in $50,000 in repairs. This increased the value of the house by 150%. That means he made a profit of $80,000 + $50,000 = $250,000. #### 250,000",
+      "parsed_answer": 250000.0,
+      "gold_answer": 70000.0
+    }
+  ],
+  "notes": "gen_kwargs={'max_new_tokens': 512, 'do_sample': False, 'num_beams': 4, 'length_penalty': 1.0, 'repetition_penalty': 1.15, 'no_repeat_ngram_size': 4}"
+}

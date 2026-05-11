@@ -1,0 +1,56 @@
+{
+  "stage": "05a",
+  "run_name": "accuracy",
+  "started_at": "2026-05-11T19:42:47Z",
+  "completed_at": "2026-05-11T19:42:48Z",
+  "duration_seconds": 0.96,
+  "status": "completed",
+  "config_hash": "sha256:4b32f6d12b86413a",
+  "config_snapshot": {
+    "conditions": [
+      "baseline",
+      "student_direct_ft",
+      "student_set_a",
+      "student_set_b",
+      "student_set_c"
+    ],
+    "gen_dir": "/kaggle/working/COT_lab/outputs/generations",
+    "tolerance": 1e-06
+  },
+  "inputs": [
+    "/kaggle/working/COT_lab/outputs/generations/baseline.jsonl",
+    "/kaggle/working/COT_lab/outputs/generations/student_direct_ft.jsonl",
+    "/kaggle/working/COT_lab/outputs/generations/student_set_a.jsonl",
+    "/kaggle/working/COT_lab/outputs/generations/student_set_b.jsonl",
+    "/kaggle/working/COT_lab/outputs/generations/student_set_c.jsonl"
+  ],
+  "outputs": [
+    "/kaggle/working/COT_lab/outputs/eval_results/accuracy.csv",
+    "/kaggle/working/COT_lab/outputs/plots/accuracy_bar.png"
+  ],
+  "metrics": {
+    "acc_per_condition": {
+      "baseline": 0.043214556482183475,
+      "student_direct_ft": 0.050037907505686124,
+      "student_set_a": 0.025018953752843062,
+      "student_set_b": 0.030326004548900682,
+      "student_set_c": 0.03184230477634572
+    },
+    "acc_w_calc_per_condition": {
+      "baseline": 0.043214556482183475,
+      "student_direct_ft": 0.050037907505686124,
+      "student_set_a": 0.025018953752843062,
+      "student_set_b": 0.030326004548900682,
+      "student_set_c": 0.03184230477634572
+    },
+    "n_conditions_scored": 5,
+    "baseline_acc": 0.043214556482183475,
+    "below_baseline_students": [
+      "student_set_a",
+      "student_set_b",
+      "student_set_c"
+    ]
+  },
+  "samples": [],
+  "notes": "STOP per AGENT.md \u00a75a \u2014 distilled student(s) below baseline: student_set_a, student_set_b, student_set_c"
+}

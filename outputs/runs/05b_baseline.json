@@ -1,0 +1,35 @@
+{
+  "stage": "05b",
+  "run_name": "baseline",
+  "started_at": "2026-05-11T19:45:48Z",
+  "completed_at": "2026-05-11T19:49:15Z",
+  "duration_seconds": 206.65,
+  "status": "completed",
+  "config_hash": "sha256:46a9bbcc76b30396",
+  "config_snapshot": {
+    "condition": "baseline",
+    "batch_size": 16,
+    "smoke": 0,
+    "max_examples": 0
+  },
+  "inputs": [
+    "/kaggle/working/COT_lab/outputs/generations/baseline.jsonl"
+  ],
+  "outputs": [
+    "/kaggle/working/COT_lab/outputs/eval_results/baseline_receval.jsonl",
+    "/kaggle/working/COT_lab/outputs/eval_results/receval_summary.csv",
+    "/kaggle/working/COT_lab/outputs/plots/receval_violin.png"
+  ],
+  "metrics": {
+    "intra_mean": 0.9683172481813785,
+    "inter_mean": 0.05810492240945252,
+    "info_mean": -1.3433914826257922,
+    "intra_std": 0.031217380894946533,
+    "inter_std": 0.1978349180499074,
+    "info_std": 1.0514168099690133,
+    "n_scored": 1319,
+    "seconds_per_100": 15.605103888233293
+  },
+  "samples": [],
+  "notes": ""
+}

@@ -1,0 +1,78 @@
+{
+  "stage": "02",
+  "run_name": "filter",
+  "started_at": "2026-05-10T05:39:47Z",
+  "completed_at": "2026-05-10T05:39:48Z",
+  "duration_seconds": 0.63,
+  "status": "completed",
+  "config_hash": "sha256:9d612c5a3d11dde3",
+  "config_snapshot": {
+    "ans_tol": 1e-06,
+    "calculator": "src.data.calculator.correct_equations",
+    "tolerance_for_calculator_rewrite": "max(1e-6, 0.01 * max(|actual|, 1.0))"
+  },
+  "inputs": [
+    "data/raw/gsm8k/train.jsonl",
+    "data/raw/ho_et_al_cots/gsm8k_zs_cot_text-davinci-002.json"
+  ],
+  "outputs": [
+    "data/processed/set_a_nofilter.jsonl",
+    "data/processed/set_b_magister.jsonl",
+    "data/processed/set_c_calculator.jsonl",
+    "data/processed/direct_ft.jsonl"
+  ],
+  "metrics": {
+    "gsm8k_train_rows": 7473,
+    "set_a_size": 7473,
+    "set_b_size": 3389,
+    "set_c_size": 2635,
+    "direct_ft_size": 7473,
+    "set_b_keep_rate": 0.4535,
+    "set_c_keep_rate": 0.3526,
+    "n_calculator_edited": 676,
+    "skipped_no_teacher": 0,
+    "skipped_unparseable_gold": 0,
+    "skipped_unparseable_teacher_pred": 78,
+    "contingency_b_and_c": 2585,
+    "contingency_c_only": 50,
+    "contingency_b_only": 804,
+    "contingency_neither": 4034
+  },
+  "samples": [
+    {
+      "set": "A",
+      "sample_index": 0,
+      "question": "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?",
+      "cot": "In April, Natalia sold 48 clips. \nIn May, she sold half as many clips. Half of 48 is 24, so she sold 24 clips in May. \n\nIn total, she sold 48 + 24 = 72 clips in April and May.",
+      "gold_answer": "72",
+      "teacher_predicted_answer": "72."
+    },
+    {
+      "set": "B",
+      "sample_index": 0,
+      "question": "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?",
+      "cot": "In April, Natalia sold 48 clips. \nIn May, she sold half as many clips. Half of 48 is 24, so she sold 24 clips in May. \n\nIn total, she sold 48 + 24 = 72 clips in April and May.",
+      "gold_answer": "72",
+      "teacher_predicted_answer": "72."
+    },
+    {
+      "set": "C",
+      "sample_index": 0,
+      "question": "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?",
+      "cot": "In April, Natalia sold 48 clips. \nIn May, she sold half as many clips. Half of 48 is 24, so she sold 24 clips in May. \n\nIn total, she sold 48 + 24 = 72 clips in April and May.",
+      "gold_answer": "72",
+      "teacher_predicted_answer": "72.",
+      "calculator_corrected_cot": true,
+      "n_calc_edits": 0
+    },
+    {
+      "set": "direct",
+      "sample_index": 0,
+      "question": "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?",
+      "cot": "",
+      "gold_answer": "72",
+      "teacher_predicted_answer": null
+    }
+  ],
+  "notes": "Stage 2 v2: emits Set A, Set B, Set C (calculator), and Direct FT."
+}

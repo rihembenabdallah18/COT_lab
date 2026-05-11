@@ -1,0 +1,10 @@
+{
+  "run_name": "student_set_c",
+  "n_train": 2371,
+  "n_val": 264,
+  "n_epochs": 8,
+  "device": "cuda",
+  "fp16": true,
+  "best_epoch": 7.973063973063973,
+  "best_eval_loss": 0.8876846432685852
+}

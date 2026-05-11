@@ -1,0 +1,61 @@
+{
+  "stage": "04_inference",
+  "run_name": "student_set_a",
+  "started_at": "2026-05-10T08:40:36Z",
+  "completed_at": "2026-05-10T08:52:34Z",
+  "duration_seconds": 718.01,
+  "status": "completed",
+  "config_hash": "sha256:e14b8655e4088d4c",
+  "config_snapshot": {
+    "model_path": "/kaggle/working/COT_lab/outputs/checkpoints/student_set_a/checkpoint-840",
+    "out_suffix": "",
+    "config_keys": {
+      "inference_num_beams": 4,
+      "inference_no_repeat_ngram_size": 4,
+      "inference_repetition_penalty": 1.15,
+      "inference_length_penalty": 1.0,
+      "inference_max_new_tokens": 512,
+      "inference_batch_size": 8,
+      "max_input_length": 512
+    },
+    "cli_overrides": {
+      "num_beams": null,
+      "repetition_penalty": null,
+      "no_repeat_ngram_size": null,
+      "max_new_tokens": null
+    }
+  },
+  "inputs": [
+    "data/raw/gsm8k/test.jsonl"
+  ],
+  "outputs": [
+    "outputs/generations/student_set_a.jsonl"
+  ],
+  "metrics": {
+    "n_total": 1319,
+    "n_generated": 1319,
+    "already_done": 0,
+    "seconds_per_example": 0.543
+  },
+  "samples": [
+    {
+      "question": "Janet\u2019s ducks lay 16 eggs per day. She eats three for breakfast every morning and bakes muffins for her friends every day with four. She sells the remainder at the farmers' market daily for $2 per fresh duck egg. How much in dollars does she make every day at the farmers' market?",
+      "generated_cot": "Janet's ducks lay 16 eggs per day. She eats three for breakfast every morning and bakes muffins for her friends every day with four. That means she eats 32 eggs in total. She sells the remainder at the farmers' market daily for $2 per fresh duck egg. So she makes $2 * 32 = $120 every day. #### 120",
+      "parsed_answer": 120.0,
+      "gold_answer": 18.0
+    },
+    {
+      "question": "A robe takes 2 bolts of blue fiber and half that much white fiber.  How many bolts in total does it take?",
+      "generated_cot": "A robe takes 2 bolts of blue fiber and half that much white fiber. That means it takes 2 * 2 = 4 bolts of white fiber. We can set up an equation to solve for the number of bolts in the robe. 2 + 4 = 6 The robe takes 6 bolts in total. #### 6",
+      "parsed_answer": 6.0,
+      "gold_answer": 3.0
+    },
+    {
+      "question": "Josh decides to try flipping a house.  He buys a house for $80,000 and then puts in $50,000 in repairs.  This increased the value of the house by 150%.  How much profit did he make?",
+      "generated_cot": "Josh buys a house for $80,000. This means that the value of the house is $80,000 * 150% = $250,000. Josh puts in $50,000 in repairs. This increases the value by 150%, which means that the cost of the repairs is $250,000 * 15% = $150,000. Josh's profit is $250,000 + $150,000 = $350,000. #### 35000",
+      "parsed_answer": 35000.0,
+      "gold_answer": 70000.0
+    }
+  ],
+  "notes": "gen_kwargs={'max_new_tokens': 512, 'do_sample': False, 'num_beams': 4, 'length_penalty': 1.0, 'repetition_penalty': 1.15, 'no_repeat_ngram_size': 4}"
+}

@@ -1,0 +1,43 @@
+{
+  "stage": "03_train",
+  "run_name": "student_set_b_smoke",
+  "started_at": "2026-05-10T05:40:30Z",
+  "completed_at": "2026-05-10T05:40:57Z",
+  "duration_seconds": 27.44,
+  "status": "completed",
+  "config_hash": "sha256:cdae33fa58e22f5a",
+  "config_snapshot": {
+    "model_name": "google/flan-t5-base",
+    "train_file": "data/processed/set_b_magister.jsonl",
+    "n_epochs": 1,
+    "limit": 200,
+    "learning_rate": 5e-05,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "batch_size": 4,
+    "gradient_accumulation_steps": 8,
+    "max_input_length": 512,
+    "max_target_length": 512,
+    "early_stopping_patience": 2,
+    "seed": 42
+  },
+  "inputs": [
+    "data/processed/set_b_magister.jsonl"
+  ],
+  "outputs": [
+    "outputs/checkpoints/student_set_b_smoke/checkpoint-2"
+  ],
+  "metrics": {
+    "n_train": 180,
+    "n_val": 20,
+    "n_epochs_requested": 1,
+    "n_epochs_completed": 0.6956521739130435,
+    "best_epoch": 0.6956521739130435,
+    "best_eval_loss": 1.6693259477615356,
+    "device": "cuda",
+    "fp16": true,
+    "early_stopped": true
+  },
+  "samples": [],
+  "notes": "Stage 3 v2 fine-tune. Recipe: lr=5e-05, wd=0.01, epochs<= 1 (early-stop patience 2), max_in/out=512/512."
+}
