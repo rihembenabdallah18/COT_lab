@@ -33,7 +33,7 @@ from src.utils.runcard import finish, start
 from . import intra_step, inter_step, informativeness
 from .segment import segment
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 GEN_DIR = REPO_ROOT / "outputs" / "generations"
 EVAL_DIR = REPO_ROOT / "outputs" / "eval_results"
 PLOTS_DIR = REPO_ROOT / "outputs" / "plots"

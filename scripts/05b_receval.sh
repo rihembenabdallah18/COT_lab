@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Stage 5b: ReCEval scoring for all five conditions.
-# Prerequisites: Stage 4 inference complete, Stage 5a accuracy table reviewed.
+# Prerequisites: Stage 4 inference complete.
+#
+# NOTE: ReCEval can be run even when distilled students score below baseline on
+# accuracy — it is the primary diagnostic for understanding *why* accuracy is
+# low (reasoning quality vs answer extraction vs recipe issues). The STOP in
+# Stage 5a gates final paper conclusions, not diagnostic runs.
 #
 # Smoke test first (20 examples, prints step details):
 #   bash scripts/05b_receval.sh --smoke 20
