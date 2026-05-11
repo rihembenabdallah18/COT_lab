@@ -287,8 +287,10 @@ Build / keep this layout; deviations only with user approval.
 
 ```
 COT_lab/
-├── AGENT.md                              # this file
-├── CLAUDE.md                             # short pointer to AGENT.md
+├── .agent/
+│   ├── AGENT.md                          # this file
+│   └── CLAUDE.md                         # Claude Code project instructions
+├── CLAUDE.md                             # root stub pointing to .agent/CLAUDE.md
 ├── README.md
 ├── requirements.txt
 ├── doc/                                  # research context (read-only)

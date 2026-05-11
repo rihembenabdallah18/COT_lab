@@ -1,6 +1,6 @@
 # Single source of truth for all hyperparameters.
 # v2 recipe — supersedes v1 (lr=3e-4, no weight decay, 3 epochs, greedy).
-# See AGENT.md §3 for the rationale.
+# See .agent/AGENT.md §3 for the rationale.
 
 model_name: google/flan-t5-base
 seed: 42
