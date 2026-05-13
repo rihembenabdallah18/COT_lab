@@ -31,7 +31,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # All currently-supported conditions. Each maps to either a HF model name
 # (baseline) or a checkpoint dir under outputs/checkpoints/{run_name}/.
-CONDITIONS = ["baseline", "student_direct_ft",
+CONDITIONS = ["baseline", "baseline_greedy", "student_direct_ft",
               "student_set_a", "student_set_b", "student_set_c"]
 
 
@@ -226,8 +226,17 @@ def main():
     test_path = REPO_ROOT / cfg["paths"]["gsm8k_test"]
     gen_dir = REPO_ROOT / cfg["paths"]["generations_dir"]
 
-    if args.condition == "baseline":
+    if args.condition in ("baseline", "baseline_greedy"):
         model_path = cfg["model_name"]
+        if args.condition == "baseline_greedy":
+            # Force greedy decoding to match Ho et al.'s zero-shot evaluation.
+            # beam=4 inflates the untuned baseline via "lucky last number" effect.
+            if args.num_beams is None:
+                args.num_beams = 1
+            if args.repetition_penalty is None:
+                args.repetition_penalty = 1.0
+            if args.no_repeat_ngram_size is None:
+                args.no_repeat_ngram_size = 0
     elif args.checkpoint:
         model_path = args.checkpoint
     else:

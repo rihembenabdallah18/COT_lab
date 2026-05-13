@@ -33,6 +33,7 @@ PLOTS_DIR = REPO_ROOT / "outputs" / "plots"
 
 DEFAULT_CONDITIONS = [
     "baseline",
+    "baseline_greedy",
     "student_direct_ft",
     "student_set_a",
     "student_set_b",
@@ -171,7 +172,10 @@ def main() -> None:
     acc_per_condition = {r["condition"]: r["accuracy"] for r in rows}
     acc_w_prop_per_condition = {r["condition"]: r["accuracy_w_prop"] for r in rows}
 
-    baseline_acc = acc_per_condition.get("baseline")
+    # Prefer greedy baseline as reference (matches Ho et al. zero-shot protocol);
+    # fall back to beam baseline if greedy wasn't run yet.
+    ref_cond = "baseline_greedy" if "baseline_greedy" in acc_per_condition else "baseline"
+    baseline_acc = acc_per_condition.get(ref_cond)
     below_baseline: list[str] = []
     if baseline_acc is not None:
         for cond, a in acc_per_condition.items():
@@ -204,7 +208,7 @@ def main() -> None:
 
     if below_baseline:
         print()
-        print(f"!! STOP: distilled student(s) below baseline ({baseline_acc:.2%}): "
+        print(f"!! STOP: distilled student(s) below {ref_cond} ({baseline_acc:.2%}): "
               f"{below_baseline}")
         print("   Per AGENT.md §5a do not proceed to ReCEval — recipe is still broken.")
     elif missing:
