@@ -38,5 +38,20 @@ def parse_answer(text: Optional[str]) -> Optional[float]:
     return _to_float(matches[-1])
 
 
+def parse_answer_strict(text: Optional[str]) -> Optional[float]:
+    """Return the answer only if the text contains a `#### N` marker.
+
+    Unlike `parse_answer`, this never falls back to the last number in the
+    string. Use this for a fair comparison against the baseline, which never
+    emits `####` and would otherwise score via the fallback.
+    """
+    if text is None:
+        return None
+    hash_matches = list(_HASH_RE.finditer(text))
+    if hash_matches:
+        return _to_float(hash_matches[-1].group(1))
+    return None
+
+
 def _to_float(s: str) -> float:
     return float(s.replace(",", ""))

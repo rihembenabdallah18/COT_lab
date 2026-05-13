@@ -19,8 +19,8 @@ import csv
 import json
 from pathlib import Path
 
-from src.data.calculator import correct_equations
-from src.data.parse_answer import parse_answer
+from src.data.calculator import correct_and_propagate, correct_equations
+from src.data.parse_answer import parse_answer, parse_answer_strict
 from src.utils.runcard import finish, start
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -46,7 +46,7 @@ def _equal(pred: float | None, gold: float | None) -> bool:
 
 
 def _score_file(path: Path) -> dict:
-    n = correct = correct_w_calc = 0
+    n = correct = correct_strict = correct_w_calc = correct_w_prop = 0
     with path.open() as f:
         for line in f:
             line = line.strip()
@@ -59,29 +59,43 @@ def _score_file(path: Path) -> dict:
                 gold = parse_answer(gold)
 
             pred = parse_answer(cot)
+            pred_strict = parse_answer_strict(cot)
             corrected_cot, _edits = correct_equations(cot)
             pred_w_calc = parse_answer(corrected_cot)
+            propagated_cot, _pedits = correct_and_propagate(cot)
+            pred_w_prop = parse_answer(propagated_cot)
 
             n += 1
             if _equal(pred, gold):
                 correct += 1
+            if _equal(pred_strict, gold):
+                correct_strict += 1
             if _equal(pred_w_calc, gold):
                 correct_w_calc += 1
+            if _equal(pred_w_prop, gold):
+                correct_w_prop += 1
 
     acc = correct / n if n else 0.0
+    acc_strict = correct_strict / n if n else 0.0
     acc_w_calc = correct_w_calc / n if n else 0.0
+    acc_w_prop = correct_w_prop / n if n else 0.0
     return {
         "n": n,
         "correct": correct,
         "accuracy": acc,
+        "correct_strict": correct_strict,
+        "accuracy_strict": acc_strict,
         "correct_w_calc": correct_w_calc,
         "accuracy_w_calc": acc_w_calc,
+        "correct_w_prop": correct_w_prop,
+        "accuracy_w_prop": acc_w_prop,
     }
 
 
 def _write_csv(rows: list[dict], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["condition", "n", "correct", "accuracy", "correct_w_calc", "accuracy_w_calc"]
+    fields = ["condition", "n", "correct", "accuracy", "correct_strict", "accuracy_strict",
+              "correct_w_calc", "accuracy_w_calc", "correct_w_prop", "accuracy_w_prop"]
     with path.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
@@ -116,20 +130,18 @@ def _plot_bar(rows: list[dict], path: Path) -> None:
 
 
 def _print_table(rows: list[dict]) -> None:
-    headers = ("condition", "n", "acc", "acc_w_calc")
-    widths = [
-        max(len(headers[0]), max(len(r["condition"]) for r in rows)),
-        max(len(headers[1]), max(len(str(r["n"])) for r in rows)),
-        max(len(headers[2]), 7),
-        max(len(headers[3]), 10),
-    ]
-    fmt = f"{{:<{widths[0]}}}  {{:>{widths[1]}}}  {{:>{widths[2]}}}  {{:>{widths[3]}}}"
+    headers = ("condition", "n", "acc(lenient)", "acc(strict)", "acc_w_calc", "acc_w_prop")
+    col_w = [max(len(h), 12) for h in headers]
+    col_w[0] = max(col_w[0], max(len(r["condition"]) for r in rows))
+    col_w[1] = max(col_w[1], max(len(str(r["n"])) for r in rows))
+    fmt = "  ".join(f"{{:<{w}}}" if i == 0 else f"{{:>{w}}}" for i, w in enumerate(col_w))
     print(fmt.format(*headers))
-    print("  ".join("-" * w for w in widths))
+    print("  ".join("-" * w for w in col_w))
     for r in rows:
         print(fmt.format(
             r["condition"], r["n"],
-            f"{r['accuracy']:.2%}", f"{r['accuracy_w_calc']:.2%}",
+            f"{r['accuracy']:.2%}", f"{r['accuracy_strict']:.2%}",
+            f"{r['accuracy_w_calc']:.2%}", f"{r['accuracy_w_prop']:.2%}",
         ))
 
 
@@ -169,7 +181,9 @@ def main() -> None:
     _print_table(rows)
 
     acc_per_condition = {r["condition"]: r["accuracy"] for r in rows}
+    acc_strict_per_condition = {r["condition"]: r["accuracy_strict"] for r in rows}
     acc_w_calc_per_condition = {r["condition"]: r["accuracy_w_calc"] for r in rows}
+    acc_w_prop_per_condition = {r["condition"]: r["accuracy_w_prop"] for r in rows}
 
     baseline_acc = acc_per_condition.get("baseline")
     below_baseline: list[str] = []
@@ -192,7 +206,9 @@ def main() -> None:
         card,
         metrics={
             "acc_per_condition": acc_per_condition,
+            "acc_strict_per_condition": acc_strict_per_condition,
             "acc_w_calc_per_condition": acc_w_calc_per_condition,
+            "acc_w_prop_per_condition": acc_w_prop_per_condition,
             "n_conditions_scored": len(rows),
             "baseline_acc": baseline_acc,
             "below_baseline_students": below_baseline,

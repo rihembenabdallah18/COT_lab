@@ -82,3 +82,25 @@ def correct_equations(text: str) -> tuple[str, list[Edit]]:
 
     rewritten = _EQ_RE.sub(repl, text)
     return rewritten, edits
+
+
+def correct_and_propagate(text: str) -> tuple[str, list[Edit]]:
+    """Correct equations AND replace wrong values downstream.
+
+    After fixing `A op B = WRONG`, bare occurrences of WRONG in the
+    remaining text are replaced with the correct value so that dependent
+    equations also receive the right operand. Iterates until stable.
+    """
+    all_edits: list[Edit] = []
+    for _ in range(10):
+        prev = text
+        corrected, edits = correct_equations(text)
+        for edit in edits:
+            wrong = _format_number(edit.claimed)
+            right = _format_number(edit.actual)
+            corrected = re.sub(r"\b" + re.escape(wrong) + r"\b", right, corrected)
+        all_edits.extend(edits)
+        text = corrected
+        if text == prev:
+            break
+    return text, all_edits
