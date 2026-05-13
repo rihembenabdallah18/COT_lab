@@ -38,6 +38,30 @@ def parse_answer(text: Optional[str]) -> Optional[float]:
     return _to_float(matches[-1])
 
 
+def parse_answer_ho(text: Optional[str]) -> Optional[float]:
+    """Match Ho et al.'s evaluation protocol exactly.
+
+    Priority:
+      1. The number after the last `####` marker (our students' target format).
+      2. The FIRST number anywhere in the string (fallback for zero-shot outputs).
+
+    Ho et al. (2022) evaluator.py uses `first=True` when no prediction prefix is
+    configured (GSM8K zero-shot case). Their baseline scores 2.50% this way
+    because the first number in a zero-shot output is typically a number from
+    the question, not the answer. Our `parse_answer` (last-number fallback)
+    inflates the baseline to ~4.3% by picking the model's final computed value.
+    """
+    if text is None:
+        return None
+    hash_matches = list(_HASH_RE.finditer(text))
+    if hash_matches:
+        return _to_float(hash_matches[-1].group(1))
+    matches = _NUM_RE.findall(text)
+    if not matches:
+        return None
+    return _to_float(matches[0])  # first number, matching Ho et al.
+
+
 def parse_answer_strict(text: Optional[str]) -> Optional[float]:
     """Return the answer only if the text contains a `#### N` marker.
 

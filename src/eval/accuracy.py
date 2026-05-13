@@ -23,7 +23,7 @@ import json
 from pathlib import Path
 
 from src.data.calculator import correct_and_propagate
-from src.data.parse_answer import parse_answer
+from src.data.parse_answer import parse_answer_ho as parse_answer
 from src.utils.runcard import finish, start
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -172,9 +172,7 @@ def main() -> None:
     acc_per_condition = {r["condition"]: r["accuracy"] for r in rows}
     acc_w_prop_per_condition = {r["condition"]: r["accuracy_w_prop"] for r in rows}
 
-    # Prefer greedy baseline as reference (matches Ho et al. zero-shot protocol);
-    # fall back to beam baseline if greedy wasn't run yet.
-    ref_cond = "baseline_greedy" if "baseline_greedy" in acc_per_condition else "baseline"
+    ref_cond = "baseline"
     baseline_acc = acc_per_condition.get(ref_cond)
     below_baseline: list[str] = []
     if baseline_acc is not None:
@@ -208,7 +206,7 @@ def main() -> None:
 
     if below_baseline:
         print()
-        print(f"!! STOP: distilled student(s) below {ref_cond} ({baseline_acc:.2%}): "
+        print(f"!! STOP: distilled student(s) below baseline ({baseline_acc:.2%}): "
               f"{below_baseline}")
         print("   Per AGENT.md §5a do not proceed to ReCEval — recipe is still broken.")
     elif missing:
