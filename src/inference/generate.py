@@ -5,6 +5,13 @@ students), runs decoding with the v2 recipe (beam=4 + no_repeat_ngram_size=4
 + repetition_penalty=1.15 by default, all overridable from CLI), and writes
 JSONL records to outputs/generations/{condition}.jsonl.
 
+Conditions ending in _oc (e.g. student_set_c_oc) use online calculator
+decoding: a token-by-token greedy loop that intercepts each completed
+equation and injects the correct result before sampling the next token.
+This prevents wrong values from propagating through the rest of the chain.
+_oc conditions load the same checkpoint as their base (student_set_c_oc →
+student_set_c checkpoint) but generate ~3-4x slower (no batching).
+
 Defaults come from config/config.yaml so the same script handles every
 condition without per-condition flag plumbing in scripts/04_inference.sh.
 v1 used pure greedy and looped; never restore that default.
@@ -24,15 +31,17 @@ import yaml
 from tqdm import tqdm
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
+from src.data.calculator import correct_equations
 from src.data.parse_answer import parse_answer
 from src.utils.runcard import fail, finish, start
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# All currently-supported conditions. Each maps to either a HF model name
-# (baseline) or a checkpoint dir under outputs/checkpoints/{run_name}/.
+# All currently-supported conditions. _oc variants use online calculator
+# decoding and share checkpoints with their base condition.
 CONDITIONS = ["baseline", "baseline_greedy", "student_direct_ft",
-              "student_set_a", "student_set_b", "student_set_c"]
+              "student_set_a", "student_set_b", "student_set_c",
+              "student_set_a_oc", "student_set_b_oc", "student_set_c_oc"]
 
 
 def load_config(path: Path) -> dict:
@@ -112,6 +121,44 @@ def _build_gen_kwargs(cfg: dict, args) -> dict:
     return gk
 
 
+def _generate_with_online_calc(
+    model, tokenizer, input_ids: torch.Tensor, max_new_tokens: int, device: str
+) -> str:
+    """Token-by-token greedy generation with online equation correction.
+
+    After each token, decode the full current output and run correct_equations().
+    If a wrong equation was just completed, re-tokenize the corrected text so
+    the model sees the right value as context for all subsequent tokens.
+    """
+    decoder_ids = torch.tensor(
+        [[model.config.decoder_start_token_id]], device=device
+    )
+    for _ in range(max_new_tokens):
+        with torch.no_grad():
+            logits = model(input_ids=input_ids, decoder_input_ids=decoder_ids).logits
+            next_id = int(logits[0, -1].argmax())
+
+        decoder_ids = torch.cat(
+            [decoder_ids, torch.tensor([[next_id]], device=device)], dim=1
+        )
+
+        if next_id == tokenizer.eos_token_id:
+            break
+
+        current = tokenizer.decode(decoder_ids[0], skip_special_tokens=True)
+        corrected, edits = correct_equations(current)
+        if edits:
+            new_ids = tokenizer(
+                corrected, return_tensors="pt", add_special_tokens=False
+            ).input_ids.to(device)
+            decoder_ids = torch.cat(
+                [torch.tensor([[model.config.decoder_start_token_id]], device=device),
+                 new_ids], dim=1
+            )
+
+    return tokenizer.decode(decoder_ids[0], skip_special_tokens=True)
+
+
 def run_inference(
     model_path: str,
     condition: str,
@@ -119,6 +166,7 @@ def run_inference(
     test_path: Path,
     out_path: Path,
     args,
+    online_calc: bool = False,
 ) -> dict:
     test_data = load_jsonl(test_path)
     n_total = len(test_data)
@@ -151,20 +199,19 @@ def run_inference(
     t_start = time.time()
 
     with out_path.open("a") as fout:
-        for batch_start in tqdm(range(0, len(todo), batch_size), desc=condition):
-            batch = todo[batch_start: batch_start + batch_size]
-            inputs = ["Q: " + ex["question"] for ex in batch]
-            enc = tok(
-                inputs,
-                max_length=cfg["max_input_length"],
-                truncation=True,
-                padding=True,
-                return_tensors="pt",
-            ).to(device)
-            with torch.no_grad():
-                out_ids = model.generate(**enc, **gen_kwargs)
-            for ex, ids in zip(batch, out_ids):
-                generated = tok.decode(ids, skip_special_tokens=True)
+        if online_calc:
+            # Token-by-token greedy, batch_size=1 — ~3-4x slower than batched beam.
+            for ex in tqdm(todo, desc=condition):
+                enc = tok(
+                    "Q: " + ex["question"],
+                    max_length=cfg["max_input_length"],
+                    truncation=True,
+                    return_tensors="pt",
+                ).to(device)
+                generated = _generate_with_online_calc(
+                    model, tok, enc["input_ids"],
+                    gen_kwargs["max_new_tokens"], device,
+                )
                 gold = parse_answer(ex["answer"])
                 record = {
                     "question": ex["question"],
@@ -173,6 +220,29 @@ def run_inference(
                     "gold_answer": gold,
                 }
                 fout.write(json.dumps(record) + "\n")
+        else:
+            for batch_start in tqdm(range(0, len(todo), batch_size), desc=condition):
+                batch = todo[batch_start: batch_start + batch_size]
+                inputs = ["Q: " + ex["question"] for ex in batch]
+                enc = tok(
+                    inputs,
+                    max_length=cfg["max_input_length"],
+                    truncation=True,
+                    padding=True,
+                    return_tensors="pt",
+                ).to(device)
+                with torch.no_grad():
+                    out_ids = model.generate(**enc, **gen_kwargs)
+                for ex, ids in zip(batch, out_ids):
+                    generated = tok.decode(ids, skip_special_tokens=True)
+                    gold = parse_answer(ex["answer"])
+                    record = {
+                        "question": ex["question"],
+                        "generated_cot": generated,
+                        "parsed_answer": parse_answer(generated),
+                        "gold_answer": gold,
+                    }
+                    fout.write(json.dumps(record) + "\n")
 
     elapsed = time.time() - t_start
     n_generated = len(todo)
@@ -226,9 +296,13 @@ def main():
     test_path = REPO_ROOT / cfg["paths"]["gsm8k_test"]
     gen_dir = REPO_ROOT / cfg["paths"]["generations_dir"]
 
-    if args.condition in ("baseline", "baseline_greedy"):
+    # _oc conditions share the checkpoint of their base condition.
+    online_calc = args.condition.endswith("_oc")
+    base_condition = args.condition.removesuffix("_oc")
+
+    if base_condition in ("baseline", "baseline_greedy"):
         model_path = cfg["model_name"]
-        if args.condition == "baseline_greedy":
+        if base_condition == "baseline_greedy":
             # Force greedy decoding to match Ho et al.'s zero-shot evaluation.
             # beam=4 inflates the untuned baseline via "lucky last number" effect.
             if args.num_beams is None:
@@ -240,7 +314,7 @@ def main():
     elif args.checkpoint:
         model_path = args.checkpoint
     else:
-        run_dir = REPO_ROOT / cfg["paths"]["ckpt_root"] / args.condition
+        run_dir = REPO_ROOT / cfg["paths"]["ckpt_root"] / base_condition
         ckpt = _best_checkpoint(run_dir)
         model_path = str(ckpt)
         print(f"[auto] using checkpoint: {ckpt.name}")
@@ -249,6 +323,7 @@ def main():
 
     card = start("04_inference", args.condition, {
         "model_path": str(model_path),
+        "online_calc": online_calc,
         "out_suffix": args.out_suffix,
         "config_keys": {k: cfg.get(k) for k in (
             "inference_num_beams", "inference_no_repeat_ngram_size",
@@ -266,7 +341,8 @@ def main():
 
     try:
         result = run_inference(model_path, args.condition, cfg,
-                               test_path, out_path, args)
+                               test_path, out_path, args,
+                               online_calc=online_calc)
     except Exception as e:
         fail(card, f"{type(e).__name__}: {e}")
         raise

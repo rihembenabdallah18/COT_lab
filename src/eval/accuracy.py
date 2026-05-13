@@ -1,17 +1,18 @@
-"""Stage 5a — accuracy and accuracy-with-propagation.
+"""Stage 5a — accuracy and accuracy-with-calculator.
 
 For each condition with a Stage-4 generations JSONL, parse the predicted
-final answer (lenient parser: #### priority, last-number fallback) and
+final answer (Ho et al. protocol: #### priority, first-number fallback) and
 compare to gold (tolerance abs(pred - gold) < 1e-6).
 
-The ``with_prop`` variant runs ``correct_and_propagate`` on the generated
-CoT first, then re-parses. Unlike plain equation correction, this also
-replaces stale wrong values in downstream steps so dependent equations
-are fixed too.
+The ``with_calc`` variant runs ``correct_and_propagate`` on the generated
+CoT first, then re-parses. Only applied to CoT student conditions
+(student_set_*) where it is meaningful. Skipped for baseline (harmful —
+free-form text has no real equations) and direct_ft (no-op — emits only
+#### N with no intermediate equations).
 
 Outputs:
   - outputs/eval_results/accuracy.csv (condition, n, correct, accuracy,
-    correct_w_prop, accuracy_w_prop)
+    correct_w_calc, accuracy_w_calc)
   - outputs/plots/accuracy_bar.png (two bars per condition)
   - outputs/runs/05a_accuracy.json (run-card consumed by `python -m src.status`)
 """
@@ -33,11 +34,13 @@ PLOTS_DIR = REPO_ROOT / "outputs" / "plots"
 
 DEFAULT_CONDITIONS = [
     "baseline",
-    "baseline_greedy",
     "student_direct_ft",
     "student_set_a",
     "student_set_b",
     "student_set_c",
+    "student_set_a_oc",
+    "student_set_b_oc",
+    "student_set_c_oc",
 ]
 
 TOL = 1e-6
@@ -49,8 +52,8 @@ def _equal(pred: float | None, gold: float | None) -> bool:
     return abs(pred - gold) < TOL
 
 
-def _score_file(path: Path) -> dict:
-    n = correct = correct_w_prop = 0
+def _score_file(path: Path, run_calc: bool = False) -> dict:
+    n = correct = correct_w_calc = 0
     with path.open() as f:
         for line in f:
             line = line.strip()
@@ -63,29 +66,29 @@ def _score_file(path: Path) -> dict:
                 gold = parse_answer(gold)
 
             pred = parse_answer(cot)
-            propagated_cot, _ = correct_and_propagate(cot)
-            pred_w_prop = parse_answer(propagated_cot)
-
             n += 1
             if _equal(pred, gold):
                 correct += 1
-            if _equal(pred_w_prop, gold):
-                correct_w_prop += 1
+
+            if run_calc:
+                propagated_cot, _ = correct_and_propagate(cot)
+                if _equal(parse_answer(propagated_cot), gold):
+                    correct_w_calc += 1
 
     acc = correct / n if n else 0.0
-    acc_w_prop = correct_w_prop / n if n else 0.0
+    acc_w_calc = correct_w_calc / n if n else 0.0
     return {
         "n": n,
         "correct": correct,
         "accuracy": acc,
-        "correct_w_prop": correct_w_prop,
-        "accuracy_w_prop": acc_w_prop,
+        "correct_w_calc": correct_w_calc if run_calc else None,
+        "accuracy_w_calc": acc_w_calc if run_calc else None,
     }
 
 
 def _write_csv(rows: list[dict], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["condition", "n", "correct", "accuracy", "correct_w_prop", "accuracy_w_prop"]
+    fields = ["condition", "n", "correct", "accuracy", "correct_w_calc", "accuracy_w_calc"]
     with path.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
@@ -100,15 +103,16 @@ def _plot_bar(rows: list[dict], path: Path) -> None:
 
     conds = [r["condition"] for r in rows]
     acc = [r["accuracy"] * 100 for r in rows]
-    acc_w = [r["accuracy_w_prop"] * 100 for r in rows]
+    acc_w = [r["accuracy_w_calc"] * 100 if r["accuracy_w_calc"] is not None else 0
+             for r in rows]
 
     x = range(len(conds))
     width = 0.38
-    fig, ax = plt.subplots(figsize=(9, 4.5))
+    fig, ax = plt.subplots(figsize=(10, 4.5))
     ax.bar([i - width / 2 for i in x], acc, width=width, label="accuracy")
-    ax.bar([i + width / 2 for i in x], acc_w, width=width, label="accuracy_w_prop")
+    ax.bar([i + width / 2 for i in x], acc_w, width=width, label="accuracy_w_calc")
     ax.set_xticks(list(x))
-    ax.set_xticklabels(conds, rotation=20, ha="right")
+    ax.set_xticklabels(conds, rotation=25, ha="right")
     ax.set_ylabel("accuracy (%)")
     ax.set_title("GSM8K test accuracy by condition")
     ax.legend()
@@ -120,7 +124,7 @@ def _plot_bar(rows: list[dict], path: Path) -> None:
 
 
 def _print_table(rows: list[dict]) -> None:
-    headers = ("condition", "n", "accuracy", "accuracy_w_prop")
+    headers = ("condition", "n", "accuracy", "accuracy_w_calc")
     col_w = [max(len(h), 12) for h in headers]
     col_w[0] = max(col_w[0], max(len(r["condition"]) for r in rows))
     col_w[1] = max(col_w[1], max(len(str(r["n"])) for r in rows))
@@ -128,10 +132,8 @@ def _print_table(rows: list[dict]) -> None:
     print(fmt.format(*headers))
     print("  ".join("-" * w for w in col_w))
     for r in rows:
-        print(fmt.format(
-            r["condition"], r["n"],
-            f"{r['accuracy']:.2%}", f"{r['accuracy_w_prop']:.2%}",
-        ))
+        w_calc = f"{r['accuracy_w_calc']:.2%}" if r["accuracy_w_calc"] is not None else "  n/a  "
+        print(fmt.format(r["condition"], r["n"], f"{r['accuracy']:.2%}", w_calc))
 
 
 def main() -> None:
@@ -157,7 +159,8 @@ def main() -> None:
             missing.append(cond)
             continue
         inputs.append(str(path))
-        scored = _score_file(path)
+        run_calc = cond.startswith("student_set_") and not cond.endswith("_oc")
+        scored = _score_file(path, run_calc=run_calc)
         rows.append({"condition": cond, **scored})
 
     if not rows:
@@ -170,10 +173,10 @@ def main() -> None:
     _print_table(rows)
 
     acc_per_condition = {r["condition"]: r["accuracy"] for r in rows}
-    acc_w_prop_per_condition = {r["condition"]: r["accuracy_w_prop"] for r in rows}
+    acc_w_calc_per_condition = {r["condition"]: r["accuracy_w_calc"] for r in rows
+                                if r["accuracy_w_calc"] is not None}
 
-    ref_cond = "baseline"
-    baseline_acc = acc_per_condition.get(ref_cond)
+    baseline_acc = acc_per_condition.get("baseline")
     below_baseline: list[str] = []
     if baseline_acc is not None:
         for cond, a in acc_per_condition.items():
@@ -194,7 +197,7 @@ def main() -> None:
         card,
         metrics={
             "acc_per_condition": acc_per_condition,
-            "acc_w_prop_per_condition": acc_w_prop_per_condition,
+            "acc_w_calc_per_condition": acc_w_calc_per_condition,
             "n_conditions_scored": len(rows),
             "baseline_acc": baseline_acc,
             "below_baseline_students": below_baseline,
