@@ -1,7 +1,7 @@
 """Stage 5a — accuracy and accuracy-with-calculator.
 
 For each condition with a Stage-4 generations JSONL, parse the predicted
-final answer (Ho et al. protocol: #### priority, first-number fallback) and
+final answer (#### priority, last-number fallback) and
 compare to gold (tolerance abs(pred - gold) < 1e-6).
 
 The ``with_calc`` variant runs ``correct_and_propagate`` on the generated
@@ -24,7 +24,7 @@ import json
 from pathlib import Path
 
 from src.data.calculator import correct_and_propagate
-from src.data.parse_answer import parse_answer_ho as parse_answer
+from src.data.parse_answer import parse_answer
 from src.utils.runcard import finish, start
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
