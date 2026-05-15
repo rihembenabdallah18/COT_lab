@@ -113,6 +113,26 @@ With n=1,319 and the best CoT accuracy at 3.18%, the 95% CI is ≈ ±0.94 pp (bi
 
 ---
 
+## 6. v4 training recipe (planned changes)
+
+The following changes are planned to push all CoT students above the baseline (4.32%) and above Direct FT (5.00%) at least with calculator correction. Documented here so individual changes can be reverted by restoring the old value.
+
+### config/config.yaml
+
+| Parameter | v2 value | v4 value | Reason |
+|---|---|---|---|
+| `num_epochs` | 8 | 12 | All CoT students had `best_epoch ≈ 8` — still improving at cutoff |
+| `weight_decay` | 0.01 | 0.05 | More regularisation for small CoT sets (set_b: 3K, set_c: 2.4K) |
+
+### src/train/finetune.py (inside `Seq2SeqTrainingArguments`)
+
+| Parameter | v2 value | v4 value | Reason |
+|---|---|---|---|
+| `label_smoothing_factor` | not set (0.0) | 0.1 | CoT chains are noisy labels; smoothing improves generalisation |
+| `lr_scheduler_type` | not set (linear) | `"cosine"` | Smoother LR decay over 12 epochs avoids sharp cutoff |
+
+---
+
 ## 5. Prioritised action list
 
 | Priority | Action | Stage affected | Effort | Expected payoff |

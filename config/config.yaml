@@ -9,9 +9,9 @@ seed: 42
 learning_rate: 5.0e-5            # was 3e-4 in v1
 batch_size: 4
 gradient_accumulation_steps: 8   # effective batch 32
-num_epochs: 8                    # was 3 in v1; with early stopping
+num_epochs: 12                   # v2: 8 — extended since models hadn't converged at epoch 8
 warmup_ratio: 0.10               # was 0.03 in v1
-weight_decay: 0.01               # was 0.0 in v1
+weight_decay: 0.05               # v2: 0.01 — more regularisation for small CoT sets
 fp16: true                       # auto-disabled on CPU
 val_split: 0.1                   # 10% deterministic val split
 early_stopping_patience: 2       # epochs with no eval-loss improvement

@@ -142,6 +142,8 @@ def build_trainer(cfg: dict, run_dir: Path, ds_train, ds_val, n_epochs: int,
         load_best_model_at_end=True,        # required for EarlyStoppingCallback
         metric_for_best_model="eval_loss",
         greater_is_better=False,
+        label_smoothing_factor=0.1,
+        lr_scheduler_type="cosine",
         dataloader_num_workers=0,
     )
 
