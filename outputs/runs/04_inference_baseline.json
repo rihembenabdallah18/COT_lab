@@ -1,13 +1,14 @@
 {
   "stage": "04_inference",
   "run_name": "baseline",
-  "started_at": "2026-05-10T08:04:21Z",
-  "completed_at": "2026-05-10T08:18:54Z",
-  "duration_seconds": 873.01,
+  "started_at": "2026-05-16T12:50:59Z",
+  "completed_at": "2026-05-16T12:50:59Z",
+  "duration_seconds": 0.01,
   "status": "completed",
-  "config_hash": "sha256:a0f2da5f48079e99",
+  "config_hash": "sha256:678066e62f37fb9e",
   "config_snapshot": {
     "model_path": "google/flan-t5-base",
+    "online_calc": false,
     "out_suffix": "",
     "config_keys": {
       "inference_num_beams": 4,
@@ -33,9 +34,9 @@
   ],
   "metrics": {
     "n_total": 1319,
-    "n_generated": 1319,
-    "already_done": 0,
-    "seconds_per_example": 0.66
+    "n_generated": 0,
+    "already_done": 1319,
+    "seconds_per_example": null
   },
   "samples": [
     {

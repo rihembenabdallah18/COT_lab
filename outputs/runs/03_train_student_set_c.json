@@ -1,18 +1,18 @@
 {
   "stage": "03_train",
   "run_name": "student_set_c",
-  "started_at": "2026-05-10T06:46:52Z",
-  "completed_at": "2026-05-10T07:06:46Z",
-  "duration_seconds": 1194.65,
+  "started_at": "2026-05-16T10:51:32Z",
+  "completed_at": "2026-05-16T11:21:32Z",
+  "duration_seconds": 1800.06,
   "status": "completed",
-  "config_hash": "sha256:8702f82245518175",
+  "config_hash": "sha256:29680704f15ff84e",
   "config_snapshot": {
     "model_name": "google/flan-t5-base",
     "train_file": "data/processed/set_c_calculator.jsonl",
-    "n_epochs": 8,
+    "n_epochs": 12,
     "limit": null,
     "learning_rate": 5e-05,
-    "weight_decay": 0.01,
+    "weight_decay": 0.05,
     "warmup_ratio": 0.1,
     "batch_size": 4,
     "gradient_accumulation_steps": 8,
@@ -25,20 +25,20 @@
     "data/processed/set_c_calculator.jsonl"
   ],
   "outputs": [
-    "outputs/checkpoints/student_set_c/checkpoint-259",
-    "outputs/checkpoints/student_set_c/checkpoint-296"
+    "outputs/checkpoints/student_set_c/checkpoint-408",
+    "outputs/checkpoints/student_set_c/checkpoint-444"
   ],
   "metrics": {
     "n_train": 2371,
     "n_val": 264,
-    "n_epochs_requested": 8,
-    "n_epochs_completed": 7.973063973063973,
-    "best_epoch": 7.973063973063973,
-    "best_eval_loss": 0.8876846432685852,
+    "n_epochs_requested": 12,
+    "n_epochs_completed": 11.95959595959596,
+    "best_epoch": 11.95959595959596,
+    "best_eval_loss": 2.33583927154541,
     "device": "cuda",
     "fp16": true,
     "early_stopped": true
   },
   "samples": [],
-  "notes": "Stage 3 v2 fine-tune. Recipe: lr=5e-05, wd=0.01, epochs<= 8 (early-stop patience 2), max_in/out=512/512."
+  "notes": "Stage 3 v2 fine-tune. Recipe: lr=5e-05, wd=0.05, epochs<= 12 (early-stop patience 2), max_in/out=512/512."
 }

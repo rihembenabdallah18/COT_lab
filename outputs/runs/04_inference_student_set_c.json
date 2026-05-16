@@ -1,13 +1,14 @@
 {
   "stage": "04_inference",
   "run_name": "student_set_c",
-  "started_at": "2026-05-10T08:30:49Z",
-  "completed_at": "2026-05-10T08:40:34Z",
-  "duration_seconds": 584.45,
+  "started_at": "2026-05-16T13:17:25Z",
+  "completed_at": "2026-05-16T13:17:25Z",
+  "duration_seconds": 0.01,
   "status": "completed",
-  "config_hash": "sha256:2e269ddf9c714544",
+  "config_hash": "sha256:6f8794f6461da603",
   "config_snapshot": {
-    "model_path": "/kaggle/working/COT_lab/outputs/checkpoints/student_set_c/checkpoint-296",
+    "model_path": "/kaggle/working/COT_lab/outputs/checkpoints/student_set_c/checkpoint-444",
+    "online_calc": false,
     "out_suffix": "",
     "config_keys": {
       "inference_num_beams": 4,
@@ -33,9 +34,9 @@
   ],
   "metrics": {
     "n_total": 1319,
-    "n_generated": 1319,
-    "already_done": 0,
-    "seconds_per_example": 0.441
+    "n_generated": 0,
+    "already_done": 1319,
+    "seconds_per_example": null
   },
   "samples": [
     {
