@@ -1,9 +1,9 @@
 {
   "stage": "04_inference",
   "run_name": "baseline",
-  "started_at": "2026-05-17T18:49:36Z",
-  "completed_at": "2026-05-17T18:49:37Z",
-  "duration_seconds": 1.2,
+  "started_at": "2026-05-17T19:50:09Z",
+  "completed_at": "2026-05-17T19:50:09Z",
+  "duration_seconds": 0.01,
   "status": "completed",
   "config_hash": "sha256:d393af5b643c9dc8",
   "config_snapshot": {

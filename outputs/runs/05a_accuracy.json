@@ -1,0 +1,42 @@
+{
+  "stage": "05a",
+  "run_name": "accuracy",
+  "started_at": "2026-05-17T20:05:01Z",
+  "completed_at": "2026-05-17T20:05:02Z",
+  "duration_seconds": 0.94,
+  "status": "completed",
+  "config_hash": "sha256:e1aae61bb566588d",
+  "config_snapshot": {
+    "conditions": [
+      "baseline",
+      "student_direct_ft",
+      "student_set_a",
+      "student_set_b",
+      "student_set_c"
+    ],
+    "tolerance": 1e-06
+  },
+  "inputs": [
+    "/kaggle/working/COT_lab/outputs/generations/baseline.jsonl",
+    "/kaggle/working/COT_lab/outputs/generations/student_direct_ft.jsonl",
+    "/kaggle/working/COT_lab/outputs/generations/student_set_a.jsonl",
+    "/kaggle/working/COT_lab/outputs/generations/student_set_b.jsonl",
+    "/kaggle/working/COT_lab/outputs/generations/student_set_c.jsonl"
+  ],
+  "outputs": [
+    "/kaggle/working/COT_lab/outputs/eval_results/accuracy.csv",
+    "/kaggle/working/COT_lab/outputs/plots/accuracy_bar.png"
+  ],
+  "metrics": {
+    "acc_per_condition": {
+      "baseline": 0.043214556482183475,
+      "student_direct_ft": 0.052312357846853674,
+      "student_set_a": 0.026535253980288095,
+      "student_set_b": 0.03335860500379075,
+      "student_set_c": 0.02880970432145565
+    },
+    "n_conditions_scored": 5
+  },
+  "samples": [],
+  "notes": ""
+}

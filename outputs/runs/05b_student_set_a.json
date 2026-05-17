@@ -1,0 +1,36 @@
+{
+  "stage": "05b",
+  "run_name": "student_set_a",
+  "started_at": "2026-05-17T20:09:28Z",
+  "completed_at": "2026-05-17T20:13:01Z",
+  "duration_seconds": 213.21,
+  "status": "completed",
+  "config_hash": "sha256:44853f638b37bb2f",
+  "config_snapshot": {
+    "condition": "student_set_a",
+    "batch_size": 16,
+    "smoke": 0,
+    "max_examples": 0,
+    "info_scorer": "distilgpt2"
+  },
+  "inputs": [
+    "/kaggle/working/COT_lab/outputs/generations/student_set_a.jsonl"
+  ],
+  "outputs": [
+    "/kaggle/working/COT_lab/outputs/eval_results/student_set_a_receval.jsonl",
+    "/kaggle/working/COT_lab/outputs/eval_results/receval_summary.csv",
+    "/kaggle/working/COT_lab/outputs/plots/receval_violin.png"
+  ],
+  "metrics": {
+    "intra_mean": 0.9199869025377182,
+    "inter_mean": 0.06823170671226786,
+    "info_mean": -2.5207315937328554,
+    "intra_std": 0.03135394821374246,
+    "inter_std": 0.19234065514308096,
+    "info_std": 1.7018102886588307,
+    "n_scored": 1319,
+    "seconds_per_100": 16.095398175526604
+  },
+  "samples": [],
+  "notes": ""
+}

@@ -1,9 +1,9 @@
 {
   "stage": "03_train",
   "run_name": "student_set_c",
-  "started_at": "2026-05-17T14:52:51Z",
-  "completed_at": "2026-05-17T15:12:30Z",
-  "duration_seconds": 1179.67,
+  "started_at": "2026-05-17T19:27:09Z",
+  "completed_at": "2026-05-17T19:47:33Z",
+  "duration_seconds": 1223.86,
   "status": "completed",
   "config_hash": "sha256:4550f1b46f5f59fc",
   "config_snapshot": {

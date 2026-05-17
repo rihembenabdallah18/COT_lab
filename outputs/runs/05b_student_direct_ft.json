@@ -1,0 +1,36 @@
+{
+  "stage": "05b",
+  "run_name": "student_direct_ft",
+  "started_at": "2026-05-17T20:08:28Z",
+  "completed_at": "2026-05-17T20:09:24Z",
+  "duration_seconds": 55.7,
+  "status": "completed",
+  "config_hash": "sha256:8d653cdc05d41738",
+  "config_snapshot": {
+    "condition": "student_direct_ft",
+    "batch_size": 16,
+    "smoke": 0,
+    "max_examples": 0,
+    "info_scorer": "distilgpt2"
+  },
+  "inputs": [
+    "/kaggle/working/COT_lab/outputs/generations/student_direct_ft.jsonl"
+  ],
+  "outputs": [
+    "/kaggle/working/COT_lab/outputs/eval_results/student_direct_ft_receval.jsonl",
+    "/kaggle/working/COT_lab/outputs/eval_results/receval_summary.csv",
+    "/kaggle/working/COT_lab/outputs/plots/receval_violin.png"
+  ],
+  "metrics": {
+    "intra_mean": 0.9121404300592811,
+    "inter_mean": 0.7224362979159071,
+    "info_mean": 1.479268549065232,
+    "intra_std": 0.021117054911523298,
+    "inter_std": 0.3608940253137752,
+    "info_std": 1.3545030959669617,
+    "n_scored": 1319,
+    "seconds_per_100": 4.156322349102955
+  },
+  "samples": [],
+  "notes": ""
+}
