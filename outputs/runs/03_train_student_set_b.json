@@ -1,0 +1,42 @@
+{
+  "stage": "03_train",
+  "run_name": "student_set_b",
+  "started_at": "2026-05-17T18:23:35Z",
+  "completed_at": "2026-05-17T18:49:25Z",
+  "duration_seconds": 1550.44,
+  "status": "completed",
+  "config_hash": "sha256:c51b18c1da7663ad",
+  "config_snapshot": {
+    "model_name": "google/flan-t5-base",
+    "train_file": "data/processed/set_b_magister.jsonl",
+    "n_epochs": 8,
+    "limit": null,
+    "learning_rate": 5e-05,
+    "weight_decay": 0.05,
+    "warmup_ratio": 0.1,
+    "batch_size": 4,
+    "gradient_accumulation_steps": 8,
+    "max_input_length": 512,
+    "max_target_length": 512,
+    "early_stopping_patience": 2,
+    "seed": 42
+  },
+  "inputs": [
+    "data/processed/set_b_magister.jsonl"
+  ],
+  "outputs": [
+    "outputs/checkpoints/student_set_b/checkpoint-334",
+    "outputs/checkpoints/student_set_b/checkpoint-376"
+  ],
+  "metrics": {
+    "n_train": 3050,
+    "n_val": 339,
+    "n_epochs_completed": 7.87434554973822,
+    "best_epoch": 6.994764397905759,
+    "best_eval_loss": 0.9215199947357178,
+    "device": "cuda",
+    "fp16": true
+  },
+  "samples": [],
+  "notes": "lr=5e-05, wd=0.05, epochs<= 8, patience=2"
+}

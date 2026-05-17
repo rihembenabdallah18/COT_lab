@@ -1,0 +1,42 @@
+{
+  "stage": "03_train",
+  "run_name": "student_direct_ft",
+  "started_at": "2026-05-17T17:08:33Z",
+  "completed_at": "2026-05-17T17:45:09Z",
+  "duration_seconds": 2195.44,
+  "status": "completed",
+  "config_hash": "sha256:4c67db8f52f23af7",
+  "config_snapshot": {
+    "model_name": "google/flan-t5-base",
+    "train_file": "data/processed/direct_ft.jsonl",
+    "n_epochs": 8,
+    "limit": null,
+    "learning_rate": 5e-05,
+    "weight_decay": 0.05,
+    "warmup_ratio": 0.1,
+    "batch_size": 4,
+    "gradient_accumulation_steps": 8,
+    "max_input_length": 512,
+    "max_target_length": 512,
+    "early_stopping_patience": 2,
+    "seed": 42
+  },
+  "inputs": [
+    "data/processed/direct_ft.jsonl"
+  ],
+  "outputs": [
+    "outputs/checkpoints/student_direct_ft/checkpoint-525",
+    "outputs/checkpoints/student_direct_ft/checkpoint-735"
+  ],
+  "metrics": {
+    "n_train": 6725,
+    "n_val": 748,
+    "n_epochs_completed": 6.991676575505351,
+    "best_epoch": 4.9940546967895365,
+    "best_eval_loss": 0.868415355682373,
+    "device": "cuda",
+    "fp16": true
+  },
+  "samples": [],
+  "notes": "lr=5e-05, wd=0.05, epochs<= 8, patience=2"
+}

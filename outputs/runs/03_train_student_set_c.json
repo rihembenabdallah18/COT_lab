@@ -1,0 +1,42 @@
+{
+  "stage": "03_train",
+  "run_name": "student_set_c",
+  "started_at": "2026-05-17T14:52:51Z",
+  "completed_at": "2026-05-17T15:12:30Z",
+  "duration_seconds": 1179.67,
+  "status": "completed",
+  "config_hash": "sha256:4550f1b46f5f59fc",
+  "config_snapshot": {
+    "model_name": "google/flan-t5-base",
+    "train_file": "data/processed/set_c_calculator.jsonl",
+    "n_epochs": 8,
+    "limit": null,
+    "learning_rate": 5e-05,
+    "weight_decay": 0.05,
+    "warmup_ratio": 0.1,
+    "batch_size": 4,
+    "gradient_accumulation_steps": 8,
+    "max_input_length": 512,
+    "max_target_length": 512,
+    "early_stopping_patience": 2,
+    "seed": 42
+  },
+  "inputs": [
+    "data/processed/set_c_calculator.jsonl"
+  ],
+  "outputs": [
+    "outputs/checkpoints/student_set_c/checkpoint-259",
+    "outputs/checkpoints/student_set_c/checkpoint-296"
+  ],
+  "metrics": {
+    "n_train": 2371,
+    "n_val": 264,
+    "n_epochs_completed": 7.973063973063973,
+    "best_epoch": 7.973063973063973,
+    "best_eval_loss": 0.8873926997184753,
+    "device": "cuda",
+    "fp16": true
+  },
+  "samples": [],
+  "notes": "lr=5e-05, wd=0.05, epochs<= 8, patience=2"
+}
