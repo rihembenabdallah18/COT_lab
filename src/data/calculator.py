@@ -1,15 +1,11 @@
-"""Equation rewriter shared by two stages.
+"""Equation rewriter used by Stage 2 to build Set C.
 
-Stage 2  : used to build Set C — the calculator-corrected filter.
-           For each teacher CoT we rewrite each `A op B = C` substring with
-           the correct value, then re-parse the final answer; we keep the
-           CoT in Set C iff the corrected final answer matches gold.
+For each `A op B = C` substring in a teacher CoT, replace `C` with the
+correct value when it differs from `lhs op rhs` by more than a small
+tolerance. A claimed result is left alone when:
 
-Stage 5a : same logic, applied to *student* outputs to produce
-           accuracy-with-calculator (Magister's secondary metric).
+  abs(actual - claimed) <= max(1e-6, 0.01 * max(|actual|, 1.0))
 
-Tolerance: a claimed result `C` is replaced only when it differs from the
-true `lhs op rhs` by more than `max(1e-6, 0.01 * max(|actual|, 1.0))`.
 This window is wide enough to leave 50/60 = 0.83 alone (rounded) but
 narrow enough to catch genuine arithmetic mistakes like 6 * 52 = 312.
 """
@@ -18,9 +14,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-# `[-+]?` is permitted because the regex engine scans left-to-right, so the
-# first `[-+]?` only fires when the character is not the consumed binary
-# operator from a previous match.
 _EQ_RE = re.compile(
     r"([-+]?\d+(?:\.\d+)?)\s*"
     r"([+\-*/])\s*"
@@ -38,9 +31,9 @@ _OPS = {
 
 @dataclass
 class Edit:
-    span: tuple[int, int]    # (start, end) in the *original* text
-    original: str            # full matched substring before rewrite
-    corrected: str           # full substring after rewrite
+    span: tuple[int, int]
+    original: str
+    corrected: str
     claimed: float
     actual: float
 
@@ -70,7 +63,7 @@ def correct_equations(text: str) -> tuple[str, list[Edit]]:
         b = float(m.group(3))
         c = float(m.group(4))
         actual = _OPS[op](a, b)
-        if actual is None:                     # division by zero — don't touch
+        if actual is None:
             return m.group(0)
         if _is_close(c, actual):
             return m.group(0)
@@ -82,25 +75,3 @@ def correct_equations(text: str) -> tuple[str, list[Edit]]:
 
     rewritten = _EQ_RE.sub(repl, text)
     return rewritten, edits
-
-
-def correct_and_propagate(text: str) -> tuple[str, list[Edit]]:
-    """Correct equations AND replace wrong values downstream.
-
-    After fixing `A op B = WRONG`, bare occurrences of WRONG in the
-    remaining text are replaced with the correct value so that dependent
-    equations also receive the right operand. Iterates until stable.
-    """
-    all_edits: list[Edit] = []
-    for _ in range(10):
-        prev = text
-        corrected, edits = correct_equations(text)
-        for edit in edits:
-            wrong = _format_number(edit.claimed)
-            right = _format_number(edit.actual)
-            corrected = re.sub(r"\b" + re.escape(wrong) + r"\b", right, corrected)
-        all_edits.extend(edits)
-        text = corrected
-        if text == prev:
-            break
-    return text, all_edits
