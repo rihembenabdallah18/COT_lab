@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stage 5b: ReCEval scoring for all five conditions.
+# Stage 5b: ReCEval scoring for all conditions (including online-calculator variants).
 # Prerequisites: Stage 4 inference complete.
 #
 # NOTE: ReCEval can be run even when distilled students score below baseline on
@@ -30,6 +30,9 @@ CONDITIONS=(
   student_set_a
   student_set_b
   student_set_c
+  student_set_a_oc
+  student_set_b_oc
+  student_set_c_oc
 )
 
 # If smoke mode, run only student_set_b (cheapest meaningful check)

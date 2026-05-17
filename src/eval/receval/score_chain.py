@@ -44,6 +44,10 @@ CONDITIONS = [
     "student_set_a",
     "student_set_b",
     "student_set_c",
+    "student_set_a_oc",
+    "student_set_b_oc",
+    "student_set_c_oc",
+    "teacher",
 ]
 
 METRICS = ["intra", "inter", "info"]
@@ -187,17 +191,40 @@ def main() -> None:
                     help="Score only first N examples and print step details")
     ap.add_argument("--max-examples", type=int, default=0,
                     help="Cap at N examples (use 500 if runtime is tight)")
+    ap.add_argument("--info-scorer", type=str, default=None,
+                    help="Causal LM for informativeness scoring. "
+                         "Defaults to config info_scorer_model or EleutherAI/pythia-410m.")
     args = ap.parse_args()
 
-    gen_path = args.gen_dir / f"{args.condition}.jsonl"
-    if not gen_path.exists():
-        raise SystemExit(f"No generations file: {gen_path}. Run Stage 4 first.")
+    # Resolve info scorer: CLI > config > default
+    if args.info_scorer:
+        info_model = args.info_scorer
+    else:
+        try:
+            import yaml
+            cfg = yaml.safe_load((REPO_ROOT / "config" / "config.yaml").read_text())
+            info_model = cfg.get("info_scorer_model") or informativeness._DEFAULT_MODEL
+        except Exception:
+            info_model = informativeness._DEFAULT_MODEL
+    informativeness.init(info_model)
+    print(f"  info scorer: {info_model}")
+
+    canonical = args.gen_dir / f"{args.condition}.jsonl"
+    if canonical.exists():
+        gen_path = canonical
+    else:
+        versions = sorted(args.gen_dir.glob(f"{args.condition} (*).jsonl"))
+        if versions:
+            gen_path = versions[-1]
+        else:
+            raise SystemExit(f"No generations file: {canonical}. Run Stage 4 first.")
 
     card = start("05b", args.condition, {
         "condition": args.condition,
         "batch_size": args.batch_size,
         "smoke": args.smoke,
         "max_examples": args.max_examples,
+        "info_scorer": info_model,
     })
 
     with gen_path.open() as f:
